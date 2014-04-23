@@ -1,10 +1,10 @@
       subroutine nitsol(n, x, f, jacv, ftol, stptol, 
-     $     input, info, rwork, rpar, ipar, iterm, dinpr, dnorm)
+     $     input, rinpt, info, rwork, rpar, ipar, iterm, dinpr, dnorm)
 
       implicit none  
 
-      integer n, input(10), info(6), ipar(*), iterm 
-      double precision x(n), ftol, stptol, rwork(*), rpar(*) 
+      integer n, input(12), info(6), ipar(*), iterm 
+      double precision x(n), ftol, stptol, rinpt(8), rwork(*), rpar(*)
       double precision dinpr, dnorm
       external f, jacv, dinpr, dnorm
 
@@ -83,7 +83,10 @@ c  ftol   = stopping tolerance on the f-norm.
 c
 c  stptol = stopping tolerance on the steplength.
 c
-c  input  = integer vector of length 10 containing various user-specified 
+c  input  = integer vector of length 12 containing various user-specified 
+c           inputs; see below. 
+c
+c  rinpt  = real vector of length 8 containing various user-specified 
 c           inputs; see below. 
 c
 c  info   = integer vector of length 6 containing various outputs; 
@@ -158,7 +161,7 @@ c
 c Further explanation of input: 
 c
 c This array allows the user to specify various options. It should be 
-c declared an integer vector of length 11 in the calling program. To 
+c declared an integer vector of length 12 in the calling program. To 
 c specify an option, set the appropriate input component to the desired 
 c value according to the specifications below. 
 c
@@ -234,7 +237,7 @@ c    input(9) = ibtmax = maximum allowable number of backtracks (step
 c               reductions) per call to nitbt (default 10). 
 c
 c               USAGE NOTE: Backtracking can be turned off by setting 
-c		ibtmax = -1. Other negative values of ibtmax are not 
+c               ibtmax = -1. Other negative values of ibtmax are not 
 c               valid. 
 c
 c    input(10) = ieta = flag determining the forcing term eta as follows: 
@@ -244,16 +247,16 @@ c                 1 => (||fcur||/||fprev||)**2
 c                 2 => gamma*(||fcur||/||fprev||)**alpha 
 c                      for user-supplied gamma in (0,1] and alpha in (1,2] 
 c                 3 => fixed (constant) eta in (0,1), either 0.1 (default) 
-c		       or specified by the user (see USAGE NOTE below) 
+c                      or specified by the user (see USAGE NOTE below) 
 c               Here, fcur = current f, fprev = previous f, etc. The Krylov 
 c               iterations are terminated when an iterate s satisfies 
 c               an inexact Newton condition ||F + J*s|| .le. eta*||F||.
 c
 c               USAGE NOTE: If input(10) = ieta = 2, then alpha and gamma 
 c               must be set in common block nitparam.h as described below. 
-c		If input(10) = ieta = 3, then the desired constant eta may 
-c		be similarly set in nitparam.h if a value other than the 
-c		default of 0.1 is desired. 
+c               If input(10) = ieta = 3, then the desired constant eta may 
+c               be similarly set in nitparam.h if a value other than the 
+c               default of 0.1 is desired. 
 c               
 c               The first three expressions above are from S. C. Eisenstat 
 c               and H. F. Walker, "Choosing the forcing terms in an inexact 
@@ -267,7 +270,7 @@ c               of q-order alpha when gamma < 1 and, when gamma = 1, of
 c               r-order alpha and q-order p for every p in [1,alpha). The 
 c               fourth gives q-linear convergence with asymptotic rate 
 c               constant eta in a certain norm; see R. S. Dembo, S. C. 
-c		Eisenstat, and T. Steihaug, "Inexact Newton methods", 
+c               Eisenstat, and T. Steihaug, "Inexact Newton methods", 
 c               SIAM J. Numer. Anal., 18 (1982), pp. 400-408. 
 c
 c               Of these four choices, the 1st is usually satisfactory, 
@@ -276,6 +279,104 @@ c               useful in some situations, e.g., it may be desirable to
 c               choose a fairly large fixed eta in (0,1), such as eta = .1, 
 c               when numerical inaccuracy prevents the Krylov solver 
 c               from obtaining much residual reduction. 
+c
+c Optional extra user input:
+c
+c    input(11) = iplvl = level of printout (default 0).
+c     iplvl = 0 => no printout
+c           = 1 => iteration numbers and F-norms
+c           = 2 => ... + some stats, step norms, and linear model norms
+c           = 3 => ... + some Krylov solver and backtrack information
+c           = 4 => ... + more Krylov solver and backtrack information
+c
+c    input(12) = ipunit = printout unit number (default 6),
+c               e.g., ipunit = 6 => standard output. 
+c
+c ------------------------------------------------------------------------
+c 
+c Further explanation of rinpt: 
+c
+c This array allows the user to specify various options. It should be 
+c declared a real vector of length 8 in the calling program. To 
+c specify an option, set the appropriate input component to the desired 
+c value according to the specifications below. 
+c
+c USAGE NOTE: Setting the first real input component to zero gives the 
+c default options for all components.
+c
+c The real input components are usually of interest only to more 
+c experienced users. 
+c
+c Optional experienced user real input:
+c
+c    rinpt(1) = choice1_exp -
+c               parameter used in the update of the forcing term 
+c               eta when ieta = 0 (default).  This is the exponent
+c               for determining the etamin safeguard.  The default
+c               value is choice1_exp = (1+sqrt(5))/2.  A larger
+c               value will allow eta to decrease more rapidly,
+c               while a smaller value will result in a larger 
+c               value for the safeguard. 
+c
+c    rinpt(2) = choice2_exp -
+c               parameter used in the update of the forcing term 
+c               eta when ieta = 2.  This is the exponent alpha 
+c               in the expression gamma*(||fcur||/||fprev||)**alpha; 
+c               it is also used to determine the etamin safeguard.  
+c               The default value is 2.0. Valid values are in the 
+c               range (1.0, 2.0].
+c
+c    rinpt(3) = choice2_coef -
+c               parameter used in the update of the forcing term eta 
+c               when ieta = 2.  This is the coefficient gamma used 
+c               in the expression gamma*(||fcur||/||fprev||)**alpha;
+c               it is also used to determine the etamin safeguard.
+c               The default value is 1.0. Valid values are in the 
+c               range (0.0, 1.0]. 
+c
+c    rinpt(4) = eta_cutoff   -
+c               parameter used to determine when to disable 
+c               safeguarding the update of the forcing term.  It
+c               only has meaning when ieta .ne. 3.  The default
+c               value is 0.1.  A value of 0.0 will enable 
+c               safeguarding always; a value of 1.0 will disable 
+c               safeguarding always. 
+c
+c    rinpt(5) = etamax  -
+c               parameter used to provide an upper bound on the 
+c               forcing terms when input(10) .ne. 3. This is 
+c		necessary to ensure convergence of the inexact Newton 
+c		iterates and is imposed whenever eta would otherwise 
+c		be too large. (An overly large eta can result from 
+c		the updating formulas when input(10) .ne. 3 or from 
+c               safeguarding when the previous forcing term has been 
+c		excessively increased during backtracking.) The 
+c		default value of etamax is 1.0 - 1.e-4.  When 
+c		backtracking occurs several times during a nonlinear 
+c		solve the forcing term can remain near etamax for several
+c               nonlinear steps and cause the nonlinear iterations
+c               to nearly stagnate.  In such cases a smaller value of 
+c               etamax may prevent this.  Valid values are in the 
+c               range (0.0, 1.0).
+c
+c    rinpt(6) = etafixed  -
+c               this is the user-supplied fixed eta when ieta = 3.
+c               The  default value is etafixed = 0.1.  Valid values
+c               are in the range (0.0,1.0).
+c
+c    rinpt(7) = thmin  -
+c               when backtracking occurs, this is the smallest
+c               reduction factor that will be applied to the current
+c               step in a single backtracking reduction.  The default
+c               value is 0.1.  Valid  values are in the range
+c               [0.0, thmax].
+c
+c    rinpt(8) = thmax  -
+c               when backtracking occurs, this is the largest
+c               reduction factor that will be applied to the current
+c               step in a single backtracking reduction.  The default
+c               value is 0.5.  Valid values are in the range
+c               [thmin, 1.0).
 c
 c ------------------------------------------------------------------------
 c
@@ -299,7 +400,7 @@ c subroutines, or to control the default behavior of the nonlinear iterations.
 c
 c For controlling printing of diagnostic information: 
 c
-      include 'nitprint.h'
+!      include 'nitprint.h'
 c
 c If diagnostic information is desired, include this common block in the 
 c main program and set iplvl and ipunit according to the following: 
@@ -316,7 +417,7 @@ c
 c For passing information about the nonlinear iterations to user-supplied 
 c subroutines: 
 c
-      include 'nitinfo.h'
+!      include 'nitinfo.h'
 c
 c If information on the current state of the nonlinear iteration is
 c desired in a user-supplied subroutine (for example, deciding 
@@ -348,7 +449,7 @@ c
 c
 c  For controlling the default behavior of the nonlinear iterations:
 c
-      include 'nitparam.h'
+!      include 'nitparam.h'
 
 c nitparam contains some parameters that control the nonlinear
 c iterations.  In some cases, the default values reflect prevailing  
@@ -442,9 +543,14 @@ c ------------------------------------------------------------------------
 c
 c Remaining declarations:
 c
-      integer ibtmax, ieta, ifdord, ijacv, ikrysl, iksmax, iresup, 
+      integer ibtmax, ieta, ifdord, ijacv, ikrysl, iksmax,
+     $     iplvl, ipunit, 
+     $     iresup, 
      $     irpre, kdmax, lfcur, lfpls, lrwork, lstep, lxpls, 
      $     nbt, nfe, njve, nli, nni, nnimax, nrpre 
+      double precision choice1_exp, choice2_exp, choice2_coef
+      double precision eta_cutoff, etamax
+      double precision thmin, thmax, etafixed
 
       include 'nitdflts.h'
  
@@ -457,8 +563,6 @@ c
 c ------------------------------------------------------------------------
 c Check inputs and initialize parameters. 
 c ------------------------------------------------------------------------
-      if (ipunit .gt. 6) open( unit=ipunit, status='unknown' )
-      if (ipunit .eq. 0) ipunit = 6
       if (input(1) .eq. 0) then
          nnimax = 200
       else
@@ -554,7 +658,39 @@ c ------------------------------------------------------------------------
 c  Check possible invalid value for printout level.  In
 c  case the value is invalid the default is restored.
 c ------------------------------------------------------------------------
+      iplvl = input(11)
       if ( iplvl .lt. 0 .or. iplvl .gt. 4 ) iplvl = DFLT_PRLVL
+
+c ------------------------------------------------------------------------
+c  Open printout file
+c ------------------------------------------------------------------------
+      ipunit = input(12)
+      if (ipunit .gt. 6) open( unit=ipunit, status='unknown' )
+      if (ipunit .eq. 0) ipunit = STDOUT
+
+c ------------------------------------------------------------------------
+c Initialize real parameters. 
+c ------------------------------------------------------------------------
+      if (rinpt(1) .le. 0.0d0) then
+          choice1_exp = DFLT_CHOICE1_EXP
+          choice2_exp = DFLT_CHOICE2_EXP
+          choice2_coef = DFLT_CHOICE2_COEF
+          eta_cutoff = DFLT_ETA_CUTOFF
+          etafixed = DFLT_ETA_FIXED
+          etamax = DFLT_ETA_MAX
+          thmin = DFLT_THMIN
+          thmax = DFLT_THMAX
+      else
+          choice1_exp = rinpt(1)
+          choice2_exp = rinpt(2)
+          choice2_coef = rinpt(3)
+          eta_cutoff = rinpt(4)
+          etamax = rinpt(5)
+          etafixed = rinpt(6)
+          thmin = rinpt(7)
+          thmax = rinpt(8)
+      endif
+
 c ------------------------------------------------------------------------
 c  Check possible invalid values for various parameters.  In
 c  case the values are invalid the defaults are restored.
@@ -584,7 +720,8 @@ c ------------------------------------------------------------------------
       call nitdrv(n, x, rwork(lfcur), rwork(lxpls), rwork(lfpls), 
      $        rwork(lstep), f, jacv, rpar, ipar, ftol, stptol, nnimax, 
      $        ijacv, ikrysl, kdmax, irpre, iksmax, iresup, ifdord, 
-     $        ibtmax, ieta, iterm, nfe, njve, nrpre, nli, nni, nbt, 
+     $        ibtmax, ieta, iplvl, ipunit,
+     $        iterm, nfe, njve, nrpre, nli, nni, nbt, 
      $        rwork(lrwork), dinpr, dnorm)
 c ------------------------------------------------------------------------
 c Set output for return. 
