@@ -1,6 +1,6 @@
       subroutine dppsl(ap,n,b)
       integer n
-      double precision ap(1),b(1)
+      double precision ap(*),b(*)
 c
 c     dppsl solves the double precision symmetric positive definite
 c     system a * x = b

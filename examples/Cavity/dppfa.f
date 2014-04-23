@@ -1,6 +1,6 @@
       subroutine dppfa(ap,n,info)
       integer n,info
-      double precision ap(1)
+      double precision ap(*)
 c
 c     dppfa factors a double precision symmetric positive definite
 c     matrix stored in packed form.

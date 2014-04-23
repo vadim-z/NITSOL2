@@ -51,3 +51,5 @@ set(CMAKE_Fortran_FLAGS_RELEASE "")
 
 # Add subprojects
 add_subdirectory(examples/Bratu)
+add_subdirectory(examples/Pormed)
+add_subdirectory(examples/Cavity)

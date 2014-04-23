@@ -134,10 +134,10 @@ c     &                         10*MAXN+((MAXN+1)**2)/2)+20) )
 
 c --------------------------------------------------------------------
 c For printing:
-      include '../Nitsol/nitprint.h'
+      include 'nitprint.h'
 
 c For internal NITSOL parameters:
-      include '../Nitsol/nitparam.h'
+      include 'nitparam.h'
 c --------------------------------------------------------------------
 
 c  Start of executable code-

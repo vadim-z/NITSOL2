@@ -15,7 +15,7 @@ c --------------------------------------------------------------------
 
 c  For obtaining information about the state of the nonlinear iteration:
 c
-      include '../Nitsol/nitinfo.h'
+      include 'nitinfo.h'
 
 c  Common blocks for sharing information with ILUT factorization routine.
 
