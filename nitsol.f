@@ -23,9 +23,9 @@ c is provided for user-supplied right preconditioning. Left preconditioning
 c is not explicitly included as an option, but the user may provide this 
 c in the subroutines for evaluating the function and Jacobian-vector 
 c products. Various algorithmic options can be selected through the input 
-c vector. Optional common blocks are also available for printing diagnostic 
+c vector. **Optional common blocks are also available for printing diagnostic 
 c information, passing information about the nonlinear iterations to user 
-c subroutines, and controlling the behavior of the nonlinear iterations. 
+c subroutines, and controlling the behavior of the nonlinear iterations.** 
 c Summary statistics are provided by the info vector on output. 
 c
 c This is the interface subroutine, which calls the driver subroutine nitdrv. 
@@ -123,8 +123,7 @@ c              5 => in nitdrv, insufficient initial model norm reduction
 c                   for adequate progress. NOTE: This can occur for several 
 c                   reasons; examine itrmks on return from the Krylov 
 c                   solver for further information. (This will be printed out 
-c                   if iplvl .ge. 3; see the discussion of optional 
-c                   common blocks below). 
+c                   if iplvl .ge. 3; see the discussion below).
 c              6 => in nitbt, failure to reach an acceptable step through 
 c                   backtracking. 
 c
@@ -253,9 +252,9 @@ c               iterations are terminated when an iterate s satisfies
 c               an inexact Newton condition ||F + J*s|| .le. eta*||F||.
 c
 c               USAGE NOTE: If input(10) = ieta = 2, then alpha and gamma 
-c               must be set in common block nitparam.h as described below. 
+c               must be set in rinpt as described below. 
 c               If input(10) = ieta = 3, then the desired constant eta may 
-c               be similarly set in nitparam.h if a value other than the 
+c               be similarly set in rinpt if a value other than the 
 c               default of 0.1 is desired. 
 c               
 c               The first three expressions above are from S. C. Eisenstat 
@@ -296,10 +295,14 @@ c ------------------------------------------------------------------------
 c 
 c Further explanation of rinpt: 
 c
-c This array allows the user to specify various options. It should be 
-c declared a real vector of length 8 in the calling program. To 
-c specify an option, set the appropriate input component to the desired 
-c value according to the specifications below. 
+c This array allows the user to specify various parameters that
+c control the nonlinear iterations.  In some cases, the default
+c values reflect prevailing practice; in other cases, they are
+c chosen to produce good average-case behavior.
+c rinpt should be declared a real vector of length 8 in the
+c calling program. To specify an option, set the appropriate
+c input component to the desired value according to the specifications
+c below. 
 c
 c USAGE NOTE: Setting the first real input component to zero gives the 
 c default options for all components.
@@ -378,6 +381,10 @@ c               step in a single backtracking reduction.  The default
 c               value is 0.5.  Valid values are in the range
 c               [thmin, 1.0).
 c
+c  The values in this vector are checked once here in nitsol 
+c  before the main solution driver is called.  If any parameter has
+c  an invalid value, it is silently reset to the default value.
+c
 c ------------------------------------------------------------------------
 c
 c Further explanation of info: On output, the components of info are 
@@ -397,22 +404,6 @@ c
 c These can be used to control printing of diagnostic information by nitsol, 
 c to pass information about the nonlinear iterations to jacv or other user 
 c subroutines, or to control the default behavior of the nonlinear iterations. 
-c
-c For controlling printing of diagnostic information: 
-c
-!      include 'nitprint.h'
-c
-c If diagnostic information is desired, include this common block in the 
-c main program and set iplvl and ipunit according to the following: 
-c
-c     iplvl = 0 => no printout
-c           = 1 => iteration numbers and F-norms
-c           = 2 => ... + some stats, step norms, and linear model norms
-c           = 3 => ... + some Krylov solver and backtrack information
-c           = 4 => ... + more Krylov solver and backtrack information
-c
-c     ipunit = printout unit number, e.g., ipunit = 6 => standard output. 
-c              NOTE: If ipunit = 0 on input, then it is set to 6 below.
 c
 c For passing information about the nonlinear iterations to user-supplied 
 c subroutines: 
@@ -445,83 +436,6 @@ c
 c    fcurnrm - ||f(xcur)||. 
 c
 c        eta - forcing term. 
-c
-c
-c  For controlling the default behavior of the nonlinear iterations:
-c
-!      include 'nitparam.h'
-
-c nitparam contains some parameters that control the nonlinear
-c iterations.  In some cases, the default values reflect prevailing  
-c practice; in other cases, they are chosen to produce good 
-c average-case behavior.  To change the default values, include this 
-c common block in the main program and set the desired variables 
-c according to the following:
-c
-c    choice1_exp -  parameter used in the update of the forcing term 
-c                   eta when ieta = 0 (default).  This is the exponent
-c                   for determining the etamin safeguard.  The default
-c                   value is choice1_exp = (1+sqrt(5))/2.  A larger
-c                   value will allow eta to decrease more rapidly,
-c                   while a smaller value will result in a larger 
-c                   value for the safeguard. 
-c
-c    choice2_exp  - parameter used in the update of the forcing term 
-c                   eta when ieta = 2.  This is the exponent alpha 
-c		    in the expression gamma*(||fcur||/||fprev||)**alpha; 
-c		    it is also used to determine the etamin safeguard.  
-c		    The default value is 2.0. Valid values are in the 
-c		    range (1.0, 2.0].
-c
-c    choice2_coef - parameter used in the update of the forcing term eta 
-c                   when ieta = 2.  This is the coefficient gamma used 
-c		    in the expression gamma*(||fcur||/||fprev||)**alpha;
-c                   it is also used to determine the etamin safeguard.
-c                   The default value is 1.0. Valid values are in the 
-c		    range (0.0, 1.0]. 
-c
-c    eta_cutoff   - parameter used to determine when to disable 
-c                   safeguarding the update of the forcing term.  It
-c                   only has meaning when ieta .ne. 3.  The default
-c                   value is 0.1.  A value of 0.0 will enable 
-c		    safeguarding always; a value of 1.0 will disable 
-c		    safeguarding always. 
-c
-c    etamax       - parameter used to provide an upper bound on the 
-c		    forcing terms when input(10) .ne. 3. This is 
-c		    necessary to ensure convergence of the inexact Newton 
-c		    iterates and is imposed whenever eta would otherwise 
-c		    be too large. (An overly large eta can result from 
-c		    the updating formulas when input(10) .ne. 3 or from 
-c                   safeguarding when the previous forcing term has been 
-c		    excessively increased during backtracking.) The 
-c		    default value of etamax is 1.0 - 1.e-4.  When 
-c		    backtracking occurs several times during a nonlinear 
-c		    solve the forcing term can remain near etamax for several
-c                   nonlinear steps and cause the nonlinear iterations
-c                   to nearly stagnate.  In such cases a smaller value of 
-c                   etamax may prevent this.  Valid values are in the 
-c                   range (0.0, 1.0).
-c
-c    etafixed     - this is the user-supplied fixed eta when ieta = 3.
-c                   The  default value is etafixed = 0.1.  Valid values
-c                   are in the range (0.0,1.0).
-c
-c    thmin        - when backtracking occurs, this is the smallest
-c                   reduction factor that will be applied to the current
-c                   step in a single backtracking reduction.  The default
-c                   value is 0.1.  Valid  values are in the range
-c                   [0.0, thmax].
-c
-c    thmax        - when backtracking occurs, this is the largest
-c                   reduction factor that will be applied to the current
-c                   step in a single backtracking reduction.  The default
-c                   value is 0.5.  Valid values are in the range
-c                   [thmin, 1.0).
-c
-c  The values in this common block are checked once here in nitsol 
-c  before the main solution driver is called.  If any parameter has
-c  an invalid value, it is silently reset to the default value.
 c
 c ------------------------------------------------------------------------
 c
