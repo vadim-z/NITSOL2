@@ -516,9 +516,9 @@ c ------------------------------------------------------------------------
          lsvsml = lsvbig + kdmax
          lw = lsvsml + kdmax
          call nitgm(n, xcur, fcur, fcnrm, step, eta, f, jacv,
-     $        rpar, ipar, info, rinfo,
-     $        ijacv, irpre, iksmax, iresup, ifdord, nfe, njve,  
-     $        nrpre, nli, kdmax, kdmaxp1, rwork(lvv), rwork(lrr), 
+     $        rpar, ipar, info, rinfo, ijacv, irpre, iksmax, iresup,
+     $        ifdord, iplvl, ipunit, nfe, njve,  nrpre, nli, kdmax,
+     $        kdmaxp1, rwork(lvv), rwork(lrr), 
      $        rwork(lsvbig), rwork(lsvsml), rwork(lw), fpls, 
      $        rsnrm, dinpr, dnorm, itrmks)
       endif
@@ -535,7 +535,7 @@ c ------------------------------------------------------------------------
          lrwork = lt + n
          call nitstb (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $        rpar, ipar, info, rinfo,
-     $        ijacv, irpre, iksmax, ifdord, nfe, njve, 
+     $        ijacv, irpre, iksmax, ifdord, iplvl, ipunit, nfe, njve, 
      $        nrpre, nli, rwork(lr), rwork(lrtil), rwork(lp), 
      $        rwork(lphat), rwork(lv), rwork(lt), rwork(lrwork), fpls, 
      $        rsnrm, dinpr, dnorm, itrmks)
@@ -556,7 +556,8 @@ c ------------------------------------------------------------------------
          lrwork = ly + n
          call nittfq (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $        rpar, ipar, info, rinfo,
-     $        ijacv, irpre, iksmax, ifdord, nfe, njve, nrpre, nli,
+     $        ijacv, irpre, iksmax, ifdord, iplvl, ipunit,
+     $        nfe, njve, nrpre, nli,
      $        rwork(lr), rwork(lrcgs), rwork(lrtil), rwork(ld), 
      $        rwork(lp), rwork(lq), rwork(lu), rwork(lv), rwork(ly),
      $        rwork(lrwork), fpls, rsnrm, dinpr, dnorm, itrmks)
