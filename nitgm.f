@@ -1,12 +1,14 @@
       subroutine nitgm (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $     rpar, ipar, info, rinfo,
-     $     ijacv, irpre, iksmax, iresup, ifdord, nfe, njve,  
+     $     ijacv, irpre, iksmax, iresup, ifdord,
+     $     iplvl, ipunit, nfe, njve,  
      $     nrpre, nli, kdmax, kdmaxp1, vv, rr, svbig, svsml, w, rwork, 
      $     rsnrm, dinpr, dnorm, itrmks)
 
       implicit none 
 
-      integer n, ipar(*), ijacv, irpre, iksmax, iresup, ifdord, nfe, 
+      integer n, ipar(*), ijacv, irpre, iksmax, iresup, ifdord,
+     $     iplvl, ipunit, nfe, 
      $     njve, nrpre, nli, kdmax, kdmaxp1, info(3), itrmks
       double precision xcur(n), fcur(n), fcnrm, step(n), eta, rpar(*), 
      $     vv(n,kdmaxp1), rr(kdmax,kdmax), svbig(kdmax), svsml(kdmax), 
@@ -199,7 +201,7 @@ c    dlamch, dinpr, dnorm, nitjv
 c
 c Common block: 
 c
-      include 'nitprint.h'
+!      include 'nitprint.h'
 c
 c If diagnostic information is desired, include this common block in the 
 c main program and set iplvl and ipunit according to the following: 

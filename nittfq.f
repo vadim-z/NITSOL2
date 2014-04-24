@@ -1,13 +1,14 @@
       subroutine nittfq (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      &     rpar, ipar, info, rinfo,
-     &     ijacv, irpre, iksmax, ifdord, nfe, njve, nrpre, nli, r,
+     &     ijacv, irpre, iksmax, ifdord,
+     &     iplvl, ipunit, nfe, njve, nrpre, nli, r,
      &     rcgs, rtil, d, p, q, u, v, y, rwork1, rwork2, rsnrm, dinpr, 
      &                                                   dnorm, itrmks )
 
       implicit none
 
       integer ifdord, ijacv, iksmax, irpre, itrmks, n, nfe, njve,
-     &        nrpre, nli
+     &        nrpre, nli, iplvl, ipunit
 
       integer ipar(*), info(3)
 
@@ -192,7 +193,7 @@ c    dlamch, dnorm, nitjv, dlamch
 
 c Common block: 
 
-      include 'nitprint.h'
+!      include 'nitprint.h'
 
 c If diagnostic information is desired, include this common block in the 
 c main program and set iplvl and ipunit according to the following: 

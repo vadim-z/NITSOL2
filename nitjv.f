@@ -151,7 +151,7 @@ c Subroutines called by this subroutine: dcopy, jacv, nitfd
 c
 c Common block: 
 c
-      include 'nitprint.h'
+!      include 'nitprint.h'
 c
 c If diagnostic information is desired, include this common block in the 
 c main program and set iplvl and ipunit according to the following: 
@@ -339,7 +339,7 @@ c Subroutines called by this subroutine: daxpy, dlamch, dscal, dnorm, f
 c
 c Common block: 
 c
-      include 'nitprint.h'
+!      include 'nitprint.h'
 c
 c If diagnostic information is desired, include this common block in the 
 c main program and set iplvl and ipunit according to the following: 
