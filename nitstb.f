@@ -1,15 +1,16 @@
-      subroutine nitstb (n, xcur, fcur, fcnrm, step, eta, f, jacv, rpar, 
-     $     ipar, ijacv, irpre, iksmax, ifdord, nfe, njve, 
+      subroutine nitstb (n, xcur, fcur, fcnrm, step, eta, f, jacv,
+     $     rpar, ipar, info, rinfo,
+     $     ijacv, irpre, iksmax, ifdord, nfe, njve, 
      $     nrpre, nli, r, rtil, p, phat, v, t, rwork1, rwork2, 
      $     rsnrm, dinpr, dnorm, itrmks)
 
       implicit none 
 
       integer n, ipar(*), ijacv, irpre, iksmax, ifdord, nfe, njve, 
-     $     nrpre, nli, itrmks
+     $     nrpre, nli, info(3), itrmks
       double precision xcur(n), fcur(n), fcnrm, step(n), eta, rpar(*), 
      $     r(n), rtil(n), p(n), phat(n), v(n), t(n), rwork1(n), 
-     $     rwork2(n), rsnrm, dinpr, dnorm 
+     $     rwork2(n), rsnrm, rinfo(2), dinpr, dnorm 
       external f, jacv, dinpr, dnorm 
 
 c ------------------------------------------------------------------------
@@ -21,6 +22,7 @@ c nonsymmetric linear systems," SIAM J. Sci. Statist. Comput., 13 (1992),
 c pp. 631--644. 
 c
 c ------------------------------------------------------------------------
+ccccc FIXME FIXME
 c 	
 c Explanation: 
 c
@@ -268,8 +270,8 @@ c ------------------------------------------------------------------------
          call dcopy(n,p,1,phat,1)
       else
          itask = 2
-         call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, ijacv, 
-     $        ifdord, itask, nfe, njve, nrpre, p, phat, 
+         call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo,
+     $        ijacv, ifdord, itask, nfe, njve, nrpre, p, phat, 
      $        rwork1, rwork2, dnorm, itrmjv)
          if (itrmjv .gt. 0) then 
             itrmks = 2
@@ -277,8 +279,8 @@ c ------------------------------------------------------------------------
          endif
       endif
       itask = 0
-      call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, ijacv, 
-     $     ifdord, itask, nfe, njve, nrpre, phat, v, 
+      call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo,
+     $     ijacv, ifdord, itask, nfe, njve, nrpre, phat, v, 
      $     rwork1, rwork2, dnorm, itrmjv)
       if (itrmjv .gt. 0) then 
          itrmks = 1
@@ -316,8 +318,8 @@ c ------------------------------------------------------------------------
          call dcopy(n,r,1,phat,1)
       else
          itask = 2
-         call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, ijacv, 
-     $        ifdord, itask, nfe, njve, nrpre, r, phat, 
+         call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo,
+     $        ijacv, ifdord, itask, nfe, njve, nrpre, r, phat, 
      $        rwork1, rwork2, dnorm, itrmjv)
          if (itrmjv .gt. 0) then 
             itrmks = 2
@@ -325,8 +327,8 @@ c ------------------------------------------------------------------------
          endif
       endif
       itask = 0
-      call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, ijacv, 
-     $     ifdord, itask, nfe, njve, nrpre, phat, t, 
+      call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo,
+     $     ijacv, ifdord, itask, nfe, njve, nrpre, phat, t, 
      $     rwork1, rwork2, dnorm, itrmjv)
       if (itrmjv .gt. 0) then 
          itrmks = 1
