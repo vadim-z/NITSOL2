@@ -636,6 +636,8 @@ c ------------------------------------------------------------------------
      $        ijacv, ikrysl, kdmax, irpre, iksmax, iresup, ifdord, 
      $        ibtmax, ieta, iplvl, ipunit,
      $        iterm, nfe, njve, nrpre, nli, nni, nbt, 
+     $        choice1_exp, choice2_exp, choice2_coef,
+     $        eta_cutoff, etamax, etafixed, thmin, thmax, 
      $        rwork(lrwork), dinpr, dnorm)
 c ------------------------------------------------------------------------
 c Set output for return. 
