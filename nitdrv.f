@@ -375,9 +375,12 @@ c ------------------------------------------------------------------------
 c
 c Remaining declarations: 
 c
-c NOTE: In nitinfo.h, instep, newstep, krystat are declared integer, 
+c NOTE: instep, newstep, krystat are declared integer, 
 c and avrate and fcurnrm are declared double precision. 
 c 
+      integer instep, newstep, krystat
+      double precision avrate, fcurnrm
+
       double precision alpha, epsmach, eta, etamin, fcnrm, 
      $     flmnrm, fpnrm, gamma, oftjs, oftlm, redfac, rsnrm, 
      $     stpnrm, temp 
@@ -588,7 +591,9 @@ c ------------------------------------------------------------------------
 c Determine an acceptable step via backtracking. 
 c ------------------------------------------------------------------------
       call nitbt(n, xcur, fcnrm, step, eta, xpls, fpls, fpnrm, oftjs, 
-     $     redfac, nfe, ibt, ibtmax, f, rpar, ipar, dnorm, itrmbt)
+     $     redfac, nfe, ibt, ibtmax, 
+     $     iplvl, ipunit, thmin, thmax,
+     $     f, rpar, ipar, dnorm, itrmbt)
       if (itrmbt .eq. 1) then
          iterm = 6
          go to 900

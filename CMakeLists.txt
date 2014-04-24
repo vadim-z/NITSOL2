@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(testluaf Fortran)
+project(testluaf Fortran C)
 
 if(CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
 	set (LFLAGS "-mkl -static-intel")
