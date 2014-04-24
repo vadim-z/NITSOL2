@@ -1,11 +1,13 @@
       subroutine nitbt(n, xcur, fcnrm, step, eta, xpls, fpls, fpnrm, 
-     $     oftjs, redfac, nfe, ibt, ibtmax, f, rpar, ipar, dnorm, 
+     $     oftjs, redfac, nfe, ibt, ibtmax, iplvl, ipunit,
+     $     thmin, thmax,
+     $     f, rpar, ipar, dnorm, 
      $     itrmbt)
 
       implicit none 
 
-      integer n, nfe, ibt, ibtmax, ipar(*), itrmbt
-      double precision xcur(n), fcnrm, step(n), eta, 
+      integer n, nfe, ibt, ibtmax, iplvl, ipunit, ipar(*), itrmbt
+      double precision thmin, thmax, xcur(n), fcnrm, step(n), eta, 
      $     xpls(n), fpls(n), fpnrm, oftjs, redfac, rpar(*), dnorm
       external f, dnorm 
 
@@ -51,6 +53,26 @@ c             USAGE NOTE: If ibtmax = -1, then backtracking is turned
 c             off. In this case, the only function of this subroutine 
 c             is to update xpls, fpls, and fpnrm. 
 c
+c  iplvl = 0 => no printout
+c        = 1 => iteration numbers and F-norms
+c        = 2 => ... + some stats, step norms, and linear model norms
+c        = 3 => ... + some Krylov solver and backtrack information
+c        = 4 => ... + more Krylov solver and backtrack information
+c
+c  ipunit = printout unit number, e.g., ipunit = 6 => standard output. 
+c 
+c  thmin        - when backtracking occurs, this is the smallest
+c                 reduction factor that will be applied to the current
+c                 step in a single backtracking reduction.  The default
+c                 value is 0.1.  Valid  values are in the range
+c                 [0.0, thmax].
+c
+c  thmax        - when backtracking occurs, this is the largest
+c                 reduction factor that will be applied to the current
+c                 step in a single backtracking reduction.  The default
+c                 value is 0.5.  Valid values are in the range
+c                 [thmin, 1.0).
+c
 c  f       = name of user-supplied subroutine for evaluating the function 
 c            the zero of which is sought; this routine has the form 
 c
@@ -94,28 +116,9 @@ c This subroutine called by: nitdrv
 c
 c Subroutines called by this subroutine: dnorm, dscal, f
 c
-c Common block: 
-c
-      include 'nitprint.h'
-c
-c If diagnostic information is desired, include this common block in the 
-c main program and set iplvl and ipunit according to the following: 
-c
-c     iplvl = 0 => no printout
-c           = 1 => iteration numbers and F-norms
-c           = 2 => ... + some stats, step norms, and linear model norms
-c           = 3 => ... + some Krylov solver and backtrack information
-c           = 4 => ... + more Krylov solver and backtrack information
-c
-c     ipunit = printout unit number.
-c
 c ------------------------------------------------------------------------
       double precision t, theta
       integer i, itrmf
-
-      include 'nitparam.h'
-
-      external nitbd
 
 c ------------------------------------------------------------------------ 
 c
