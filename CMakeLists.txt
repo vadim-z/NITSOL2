@@ -29,13 +29,13 @@ endif()
 
 set (libsrc
 	nitbd.f
-	nitbt.f
-	nitdrv.f
-	nitgm.f
 	nitjv.f
-	nitsol.f
+	nitgm.f
 	nitstb.f
 	nittfq.f
+	nitbt.f
+	nitdrv.f
+	nitsol.f
 	)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

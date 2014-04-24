@@ -1,13 +1,13 @@
-      subroutine nitjv(n, xcur, fcur, f, jacv, rpar, ipar, ijacv, 
-     $     ifdord, itask, nfe, njve, nrpre, v, z, 
+      subroutine nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo,
+     $     ijacv, ifdord, itask, nfe, njve, nrpre, v, z, 
      $     rwork1, rwork2, dnorm, itrmjv)
 
       implicit none  
 
       integer n, ipar(*), ijacv, ifdord, itask, nfe, njve, nrpre, 
-     $     itrmjv
+     $     itrmjv, info(3)
       double precision xcur(n), fcur(n), rpar(*), v(n), z(n), 
-     $     rwork1(n), rwork2(n), dnorm 
+     $     rwork1(n), rwork2(n), rinfo(2), dnorm 
       external f, jacv, dnorm
 
 c ------------------------------------------------------------------------
@@ -17,6 +17,7 @@ c J*v or J*P(inverse)*v or P(inverse)*v, where J is the Jacobian of f
 c and P is a right preconditioning operator. 
 c
 c ------------------------------------------------------------------------
+ccccc FIXME FIXME
 c 
 c Explanation: 
 c
@@ -178,7 +179,8 @@ c ------------------------------------------------------------------------
          call dcopy(n, v, 1, rwork1, 1)
       else
          ijob = 1
-         call jacv(n, xcur, fcur, ijob, v, rwork1, rpar, ipar, itrmjv)
+         call jacv(n, xcur, fcur, ijob, v, rwork1, rpar, ipar,
+     $       info, rinfo, itrmjv)
          nrpre = nrpre + 1
          if (itrmjv .ne. 0) go to 900
       endif
@@ -197,7 +199,8 @@ c finite-differences (ijacv = 0, -1).
 c ------------------------------------------------------------------------
       if (ijacv .eq. 1) then 
          ijob = 0
-         call jacv(n, xcur, fcur, ijob, rwork1, z, rpar, ipar, itrmjv)
+         call jacv(n, xcur, fcur, ijob, rwork1, z, rpar, ipar,
+     $       info, rinfo, itrmjv)
       else
          call nitfd(n, xcur, fcur, f, rpar, ipar, ijacv, ifdord, 
      $     nfe, rwork1, z, rwork2, dnorm, itrmjv)
