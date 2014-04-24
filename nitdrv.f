@@ -1,16 +1,22 @@
       subroutine nitdrv(n, xcur, fcur, xpls, fpls, 
      $     step, f, jacv, rpar, ipar, ftol, stptol, nnimax, 
      $     ijacv, ikrysl, kdmax, irpre, iksmax, iresup, ifdord, 
-     $     ibtmax, ieta, iterm, nfe, njve, nrpre, nli, nni, nbt, 
+     $     ibtmax, ieta, iplvl, ipunit,
+     $     iterm, nfe, njve, nrpre, nli, nni, nbt, 
+     $     choice1_exp, choice2_exp, choice2_coef,
+     $     eta_cutoff, etamax, etafixed, thmin, thmax, 
      $     rwork, dinpr, dnorm)
 
       implicit none  
 
       integer n, ipar(*), nnimax, ijacv, ikrysl, kdmax, irpre, 
-     $     iksmax, iresup, ifdord, ibtmax, ieta, iterm, nfe, njve, 
+     $     iksmax, iresup, ifdord, ibtmax, ieta, iplvl, ipunit,
+     $     iterm, nfe, njve, 
      $     nrpre, nli, nni, nbt
       double precision xcur(n), fcur(n), xpls(n), fpls(n), 
-     $     step(n), rpar(*), ftol, stptol, rwork(*), dinpr, dnorm
+     $     step(n), rpar(*), ftol, stptol, rwork(*), dinpr, dnorm,
+     $     choice1_exp, choice2_exp, choice2_coef,
+     $     eta_cutoff, etamax, etafixed, thmin, thmax
       external f, jacv, dinpr, dnorm
 
 c ------------------------------------------------------------------------
@@ -21,6 +27,7 @@ c
 c ------------------------------------------------------------------------
 c 
 c Explanation: 
+cccc FIXME FIXME FIXME
 c
 c  n       = dimension of the problem.
 c
@@ -187,6 +194,14 @@ c            choose a fairly large fixed eta in (0,1), such as eta = .1,
 c            when numerical inaccuracy prevents the Krylov solver 
 c            from obtaining much residual reduction. 
 c               
+c  iplvl = 0 => no printout
+c        = 1 => iteration numbers and F-norms
+c        = 2 => ... + some stats, step norms, and linear model norms
+c        = 3 => ... + some Krylov solver and backtrack information
+c        = 4 => ... + more Krylov solver and backtrack information
+c
+c  ipunit = printout unit number, e.g., ipunit = 6 => standard output. 
+c 
 c  iterm   = termination flag; values have the following meanings: 
 c              0 => normal termination: ||F||.le.ftol or ||step||.le.stptol.
 c              1 => nnimax nonlinear iterations reached without success. 
@@ -214,6 +229,71 @@ c  nni     = number of nonlinear iterations.
 c
 c  nbt     = number of backtracks. 
 c
+c  The following 8 parameters control the nonlinear iterations.
+c  These values are not checked here.  We assume
+c  that if you call nitdrv directly you know what you are doing.
+c
+c  choice1_exp -  parameter used in the update of the forcing term 
+c                 eta when ieta = 0 (default).  This is the exponent
+c                 for determining the etamin safeguard.  The default
+c                 value is choice1_exp = (1+sqrt(5))/2.  A larger
+c                 value will allow eta to decrease more rapidly,
+c                 while a smaller value will result in a larger 
+c                 value for the safeguard. 
+c
+c  choice2_exp  - parameter used in the update of the forcing term 
+c                 eta when ieta = 2.  This is the exponent alpha 
+c     	    in the expression gamma*(||fcur||/||fprev||)**alpha; 
+c     	    it is also used to determine the etamin safeguard.  
+c     	    The default value is 2.0. Valid values are in the 
+c     	    range (1.0, 2.0].
+c
+c  choice2_coef - parameter used in the update of the forcing term eta 
+c                 when ieta = 2.  This is the coefficient gamma used 
+c     	    in the expression gamma*(||fcur||/||fprev||)**alpha;
+c                 it is also used to determine the etamin safeguard.
+c                 The default value is 1.0. Valid values are in the 
+c     	    range (0.0, 1.0]. 
+c
+c  eta_cutoff   - parameter used to determine when to disable 
+c                 safeguarding the update of the forcing term.  It
+c                 only has meaning when ieta .ne. 3.  The default
+c                 value is 0.1.  A value of 0.0 will enable 
+c     	    safeguarding always; a value of 1.0 will disable 
+c     	    safeguarding always. 
+c
+c  etamax       - parameter used to provide an upper bound on the 
+c     	    forcing terms when input(10) .ne. 3. This is 
+c     	    necessary to ensure convergence of the inexact Newton 
+c     	    iterates and is imposed whenever eta would otherwise 
+c     	    be too large. (An overly large eta can result from 
+c     	    the updating formulas when input(10) .ne. 3 or from 
+c                 safeguarding when the previous forcing term has been 
+c     	    excessively increased during backtracking.) The 
+c     	    default value of etamax is 1.0 - 1.e-4.  When 
+c     	    backtracking occurs several times during a nonlinear 
+c     	    solve the forcing term can remain near etamax for several
+c                 nonlinear steps and cause the nonlinear iterations
+c                 to nearly stagnate.  In such cases a smaller value of 
+c                 etamax may prevent this.  Valid values are in the 
+c                 range (0.0, 1.0).
+c
+c  etafixed     - this is the user-supplied fixed eta when ieta = 3.
+c                 The  default value is etafixed = 0.1.  Valid values
+c                 are in the range (0.0,1.0).
+c
+c  thmin        - when backtracking occurs, this is the smallest
+c                 reduction factor that will be applied to the current
+c                 step in a single backtracking reduction.  The default
+c                 value is 0.1.  Valid  values are in the range
+c                 [0.0, thmax].
+c
+c  thmax        - when backtracking occurs, this is the largest
+c                 reduction factor that will be applied to the current
+c                 step in a single backtracking reduction.  The default
+c                 value is 0.5.  Valid values are in the range
+c                 [thmin, 1.0).
+c
 c  rwork   = real work vector for use by the Krylov solver. It is passed 
 c            in as the tail of the rwork vector in nitsol. On input to 
 c            nitsol, it should have length as follows: 
@@ -238,25 +318,10 @@ c These can be used to control printing of diagnostic information by nitsol,
 c to pass information about the nonlinear iterations to jacv or other user 
 c subroutines, or to control the default behavior of the nonlinear iterations. 
 c
-c For controlling printing of diagnostic information: 
-c
-      include 'nitprint.h'
-c
-c If diagnostic information is desired, include this common block in the 
-c main program and set iplvl and ipunit according to the following: 
-c
-c     iplvl = 0 => no printout
-c           = 1 => iteration numbers and F-norms
-c           = 2 => ... + some stats, step norms, and linear model norms
-c           = 3 => ... + some Krylov solver and backtrack information
-c           = 4 => ... + more Krylov solver and backtrack information
-c
-c     ipunit = printout unit number, e.g., ipunit = 6 => standard output. 
-c
 c For passing information about the nonlinear iterations to user-supplied 
 c subroutines: 
 c
-      include 'nitinfo.h'
+!      include 'nitinfo.h'
 c
 c If information on the current state of the nonlinear iteration is
 c desired in a user-supplied subroutine (for example, deciding 
@@ -282,82 +347,6 @@ c              in a user-supplied jacv to decide when to update the
 c              preconditioner.
 c
 c    fcurnrm - ||f(xcur)||. 
-c
-c
-c  For controlling the default behavior of the nonlinear iterations:
-c
-      include 'nitparam.h'
-
-c nitparam contains some parameters that control the nonlinear
-c iterations.  In some cases, the default values reflect prevailing  
-c practice; in other cases, they are chosen to produce good 
-c average-case behavior.  To change the default values, include this 
-c common block in the main program and set the desired variables 
-c according to the following:
-c
-c    choice1_exp -  parameter used in the update of the forcing term 
-c                   eta when ieta = 0 (default).  This is the exponent
-c                   for determining the etamin safeguard.  The default
-c                   value is choice1_exp = (1+sqrt(5))/2.  A larger
-c                   value will allow eta to decrease more rapidly,
-c                   while a smaller value will result in a larger 
-c                   value for the safeguard. 
-c
-c    choice2_exp  - parameter used in the update of the forcing term 
-c                   eta when ieta = 2.  This is the exponent alpha 
-c		    in the expression gamma*(||fcur||/||fprev||)**alpha; 
-c		    it is also used to determine the etamin safeguard.  
-c		    The default value is 2.0. Valid values are in the 
-c		    range (1.0, 2.0].
-c
-c    choice2_coef - parameter used in the update of the forcing term eta 
-c                   when ieta = 2.  This is the coefficient gamma used 
-c		    in the expression gamma*(||fcur||/||fprev||)**alpha;
-c                   it is also used to determine the etamin safeguard.
-c                   The default value is 1.0. Valid values are in the 
-c		    range (0.0, 1.0]. 
-c
-c    eta_cutoff   - parameter used to determine when to disable 
-c                   safeguarding the update of the forcing term.  It
-c                   only has meaning when ieta .ne. 3.  The default
-c                   value is 0.1.  A value of 0.0 will enable 
-c		    safeguarding always; a value of 1.0 will disable 
-c		    safeguarding always. 
-c
-c    etamax       - parameter used to provide an upper bound on the 
-c		    forcing terms when input(10) .ne. 3. This is 
-c		    necessary to ensure convergence of the inexact Newton 
-c		    iterates and is imposed whenever eta would otherwise 
-c		    be too large. (An overly large eta can result from 
-c		    the updating formulas when input(10) .ne. 3 or from 
-c                   safeguarding when the previous forcing term has been 
-c		    excessively increased during backtracking.) The 
-c		    default value of etamax is 1.0 - 1.e-4.  When 
-c		    backtracking occurs several times during a nonlinear 
-c		    solve the forcing term can remain near etamax for several
-c                   nonlinear steps and cause the nonlinear iterations
-c                   to nearly stagnate.  In such cases a smaller value of 
-c                   etamax may prevent this.  Valid values are in the 
-c                   range (0.0, 1.0).
-c
-c    etafixed     - this is the user-supplied fixed eta when ieta = 3.
-c                   The  default value is etafixed = 0.1.  Valid values
-c                   are in the range (0.0,1.0).
-c
-c    thmin        - when backtracking occurs, this is the smallest
-c                   reduction factor that will be applied to the current
-c                   step in a single backtracking reduction.  The default
-c                   value is 0.1.  Valid  values are in the range
-c                   [0.0, thmax].
-c
-c    thmax        - when backtracking occurs, this is the largest
-c                   reduction factor that will be applied to the current
-c                   step in a single backtracking reduction.  The default
-c                   value is 0.5.  Valid values are in the range
-c                   [thmin, 1.0).
-c
-c  The values in this common block are not checked here.  We assume
-c  that if you call nitdrv directly you know what you are doing.
 c
 c ------------------------------------------------------------------------
 c
