@@ -140,10 +140,10 @@ c      parameter ( LRWORK=MAXN*(MAXKD+5)+MAXKD*(MAXKD+3))
 
 c --------------------------------------------------------------------
 c For printing:
-      include 'nitprint.h'
+!      include 'nitprint.h'
 
 c For internal NITSOL parameters:
-      include 'nitparam.h'
+!      include 'nitparam.h'
 c --------------------------------------------------------------------
 
 c  Start of executable code-
@@ -196,16 +196,16 @@ c Reset particular inputs as desired.
       if ( input(10) .lt. 0 .or. input(10) .gt. 3 ) input(10) = 0
       if (input(10) .eq. 2) then 
          write (6,*) ' Type alpha, gamma:'
-         read (5,*) choice2_exp, choice2_coef
+         read (5,*) rinpt(2), rinpt(3)
       endif
       if (input(10) .eq. 3) then 
          write (6,*) ' Type fixed eta:'
-         read (5,*) etafixed
+         read (5,*) rinpt(6)
       endif
 
       write(6,810) 
-      read (5,*) iplvl, ipunit 
-      if ( ipunit .lt. 6 ) ipunit = 6
+      read (5,*) input(11), input(12)
+      if ( input(12) .lt. 6 ) input(12) = 6
 
 c Complete setup. 
 
