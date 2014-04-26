@@ -443,7 +443,7 @@ c Subroutines required by this and all called routines:
 c
 c     user supplied: f, jacv, dinpr, dnorm
 c
-c     nitsol routines: nitbd.f, nitbt, nitdrv, nitgm, nitjv, nitstb, nittfq
+c     nitsol routines: nitbt, nitdrv, nitgm, nitjv, nitstb, nittfq
 c
 c     lapack routines: dlaic1, dlamch.f
 c

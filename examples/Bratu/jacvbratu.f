@@ -1,11 +1,12 @@
-      subroutine jacvbratu(n,xcur,fcur,ijob,v,z,rpar,ipar,itrmjv)
+      subroutine jacvbratu(n,xcur,fcur,ijob,v,z,rpar,ipar,
+     $    info, rinfo, itrmjv)
 c --------------------------------------------------------------------
 c This subroutine evaluates Jacobian-vector products and preconditioner 
 c solves for the Bratu test problem. 
 c --------------------------------------------------------------------
       implicit none
-      integer n, ijob, ipar(*), itrmjv
-      double precision xcur(n), fcur(n), v(n), z(n), rpar(*)
+      integer n, ijob, ipar(*), info(3), itrmjv
+      double precision xcur(n), fcur(n), v(n), z(n), rpar(*), rinfo(2)
       double precision cl, cr, dexp, h2l
       integer i, j, j1, j2, nx, ny 
 
