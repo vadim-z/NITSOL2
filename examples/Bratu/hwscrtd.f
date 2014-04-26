@@ -983,6 +983,7 @@ C
       FI = 1.d0/dfloat(ISTAG)
       IP = -M
       IPSTOR = 0
+      JSTSAV = 0
       GO TO (101,102),ISTAG
   101 KR = 0
       IRREG = 1
