@@ -109,7 +109,7 @@ c      parameter ( LRWORK=MAXN*(MAXKD+5)+MAXKD*(MAXKD+3))
       integer n
 
       integer info(6)
-      integer input(10)
+      integer input(12)
       integer ipar(2)
 
       double precision cl
@@ -123,6 +123,7 @@ c      parameter ( LRWORK=MAXN*(MAXKD+5)+MAXKD*(MAXKD+3))
       double precision rlftol 
       double precision stptol
 
+      double precision rinpt(8)
       double precision rpar(LRPAR)
       double precision rwork(LRWORK) 
       double precision x(MAXN)
@@ -157,9 +158,12 @@ c Initialize.
 c --------------------------------------------------------------------
 c Initialize all inputs to zero (=> default options). 
 
-      do 20 i = 1, 10
+      do 20 i = 1, 12
          input(i) = 0
  20   continue
+
+c Initialize NITSOL defaults
+      call nitdflts(rinpt)
 
 c Reset particular inputs as desired.
 
@@ -241,9 +245,9 @@ c Write out setup.
       endif
       write(6,830) forcing(input(10))
       if ( input(10). eq. 1 .or. input(10) .eq. 2 ) then
-         write(6,831) choice2_exp, choice2_coef
+         write(6,831) rinpt(2), rinpt(3)
       else if ( input(10) .eq. 3 ) then
-         write(6,832) etafixed
+         write(6,832) rinpt(6)
       endif
       if ( input(5) .eq. 0 ) then
          write(6,840)
@@ -263,7 +267,7 @@ c Call nitsol.
 c --------------------------------------------------------------------
 
       call nitsol(n, x, fbratu, jacvbratu, ftol, stptol, 
-     $     input, info, rwork, rpar, ipar, iterm, ddot, dnrm2)
+     $     input, rinpt, info, rwork, rpar, ipar, iterm, ddot, dnrm2)
 
 c --------------------------------------------------------------------
 c Write results.

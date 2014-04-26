@@ -354,7 +354,7 @@ c Subroutines required by this and all called routines:
 c
 c    user supplied: f, jacv
 c
-c    nitsol routines: nitbd.f, nitbt, nitgm, nitjv, nitstb, nittfq, 
+c    nitsol routines: nitbt, nitgm, nitjv, nitstb, nittfq, 
 c
 c    lapack routines: dlaic1, dlamch
 c
@@ -390,8 +390,6 @@ c
 
       double precision dlamch
       external dlamch
-
-      external nitbd
 
 c ------------------------------------------------------------------------
 c For printing:
