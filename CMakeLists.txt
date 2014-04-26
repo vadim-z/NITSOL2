@@ -28,6 +28,7 @@ elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
 endif()
 
 set (libsrc
+	nitdflts.f
 	nitbd.f
 	nitjv.f
 	nitgm.f

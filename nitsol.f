@@ -304,7 +304,7 @@ c calling program. To specify an option, set the appropriate
 c input component to the desired value according to the specifications
 c below. 
 c
-c USAGE NOTE: Setting the first real input component to zero gives the 
+c USAGE NOTE: The subroutine nitdflts gives the 
 c default options for all components.
 c
 c The real input components are usually of interest only to more 
@@ -468,8 +468,6 @@ c
 
       include 'nitdflts.h'
  
-      external nitbd
-
 c ------------------------------------------------------------------------ 
 c
 c Begin executable code. 
@@ -585,25 +583,14 @@ c ------------------------------------------------------------------------
 c ------------------------------------------------------------------------
 c Initialize real parameters. 
 c ------------------------------------------------------------------------
-      if (rinpt(1) .le. 0.0d0) then
-          choice1_exp = DFLT_CHOICE1_EXP
-          choice2_exp = DFLT_CHOICE2_EXP
-          choice2_coef = DFLT_CHOICE2_COEF
-          eta_cutoff = DFLT_ETA_CUTOFF
-          etafixed = DFLT_ETA_FIXED
-          etamax = DFLT_ETA_MAX
-          thmin = DFLT_THMIN
-          thmax = DFLT_THMAX
-      else
-          choice1_exp = rinpt(1)
-          choice2_exp = rinpt(2)
-          choice2_coef = rinpt(3)
-          eta_cutoff = rinpt(4)
-          etamax = rinpt(5)
-          etafixed = rinpt(6)
-          thmin = rinpt(7)
-          thmax = rinpt(8)
-      endif
+      choice1_exp = rinpt(1)
+      choice2_exp = rinpt(2)
+      choice2_coef = rinpt(3)
+      eta_cutoff = rinpt(4)
+      etamax = rinpt(5)
+      etafixed = rinpt(6)
+      thmin = rinpt(7)
+      thmax = rinpt(8)
 
 c ------------------------------------------------------------------------
 c  Check possible invalid values for various parameters.  In
