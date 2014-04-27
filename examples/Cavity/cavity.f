@@ -108,7 +108,7 @@ c     &                         10*MAXN+((MAXN+1)**2)/2)+20) )
       integer neq
 
       integer info(6)
-      integer input(10)
+      integer input(12)
       integer ipar(2)
 
       double precision fnrm
@@ -117,6 +117,7 @@ c     &                         10*MAXN+((MAXN+1)**2)/2)+20) )
       double precision rlftol
       double precision stptol
 
+      double precision rinpt(8)
       double precision rpar(LRPAR)
       double precision rwork(LRWORK)
       double precision y(MAXN)
@@ -134,10 +135,10 @@ c     &                         10*MAXN+((MAXN+1)**2)/2)+20) )
 
 c --------------------------------------------------------------------
 c For printing:
-      include 'nitprint.h'
+!      include 'nitprint.h'
 
 c For internal NITSOL parameters:
-      include 'nitparam.h'
+!      include 'nitparam.h'
 c --------------------------------------------------------------------
 
 c  Start of executable code-
@@ -154,6 +155,9 @@ c Initialize all inputs to zero (=> default options).
       do i = 1, 10
          input(i) = 0
       end do
+
+c Initialize NITSOL defaults
+      call nitdflts(rinpt)
 
 c Reset particular inputs as desired. 
 
@@ -185,8 +189,8 @@ c Reset particular inputs as desired.
       read(5,*) input(8) 
 
       write(6,810)
-      read (5,*) iplvl, ipunit 
-      if ( ipunit .lt. 6 ) ipunit = 6
+      read (5,*) input(11), input(12)
+      if ( input(12) .lt. 6 ) input(12) = 6
 
 c Complete setup. 
 
@@ -214,7 +218,7 @@ c Call nitsol.
 c --------------------------------------------------------------------
 
       call nitsol(neq, y, fcav, jacvcav, ftol, stptol, 
-     $     input, info, rwork, rpar, ipar, iterm, ddot, dnrm2)
+     $     input, rinpt, info, rwork, rpar, ipar, iterm, ddot, dnrm2)
 
 c --------------------------------------------------------------------
 c Write results.

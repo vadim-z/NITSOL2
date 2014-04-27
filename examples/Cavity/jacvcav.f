@@ -1,4 +1,5 @@
-      subroutine jacvcav(n, xcur, fcur, ijob, v, z, rpar, ipar, itrmjv)
+      subroutine jacvcav(n, xcur, fcur, ijob, v, z, rpar, ipar,
+     $    info, rinfo, itrmjv)
 
       implicit none
 
@@ -12,10 +13,10 @@ c --------------------------------------------------------------------
       integer itrmjv
       integer n
 
-      integer ipar(*)
+      integer ipar(*), info(3)
 
       double precision fcur(n)
-      double precision rpar(*)
+      double precision rpar(*), rinfo(2)
       double precision v(n)
       double precision xcur(n)
       double precision z(n)
