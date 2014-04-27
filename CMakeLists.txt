@@ -29,7 +29,6 @@ endif()
 
 set (libsrc
 	nitdflts.f
-	nitbd.f
 	nitjv.f
 	nitgm.f
 	nitstb.f
