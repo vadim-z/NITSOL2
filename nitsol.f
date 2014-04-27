@@ -23,9 +23,9 @@ c is provided for user-supplied right preconditioning. Left preconditioning
 c is not explicitly included as an option, but the user may provide this 
 c in the subroutines for evaluating the function and Jacobian-vector 
 c products. Various algorithmic options can be selected through the input 
-c vector. **Optional common blocks are also available for printing diagnostic 
+c vector. Options are also available for printing diagnostic 
 c information, passing information about the nonlinear iterations to user 
-c subroutines, and controlling the behavior of the nonlinear iterations.** 
+c subroutines, and controlling the behavior of the nonlinear iterations. 
 c Summary statistics are provided by the info vector on output. 
 c
 c This is the interface subroutine, which calls the driver subroutine nitdrv. 
@@ -60,7 +60,8 @@ c           be a dummy subroutine; if right preconditioning is used but
 c           not analytic J*v evaluations, this need only evaluate 
 c           P(inverse)*v. The form is 
 c
-c           subroutine jacv(n, xcur, fcur, ijob, v, z, rpar, ipar, itrmjv)
+c           subroutine jacv(n, xcur, fcur, ijob, v, z, rpar, ipar,
+c    & iinf, riinf, itrmjv)
 c
 c           where xcur and fcur are vectors of length n containing the 
 c           current x and f values, ijob is an integer flag indicating 
@@ -68,8 +69,10 @@ c           which product is desired, v is a vector of length n to be
 c           multiplied, z is a vector of length n containing the desired 
 c           product on output, rpar and ipar are, respectively, real 
 c           and integer parameter/work arrays for use by the subroutine, 
-c           and itrmjv is an integer termination flag. The meaning of 
-c           ijob is as follows: 
+c           iinf and riinf are vectors of length 3 and 2 containing
+c           information about the nonlinear iterations (see below)
+c           and itrmjv is an integer termination flag.
+c           The meaning of ijob is as follows: 
 c             0 => z = J*v
 c             1 => z = P(inverse)*v 
 c           The meaning of itrmjv is as follows:
@@ -398,26 +401,18 @@ c     info(5)   = nni (number of nonlinear iterations)
 c     info(6)   = nbt (number of backtracks)
 c
 c ------------------------------------------------------------------------
+c 
+c Further explanation of iinf and riinf: 
 c
-c Optional common blocks: 
+c These array contain information about the nonlinear iterations
+c to be used in user-supplied subroutine jacv. 
+
+c The contents are as follows: 
 c
-c These can be used to control printing of diagnostic information by nitsol, 
-c to pass information about the nonlinear iterations to jacv or other user 
-c subroutines, or to control the default behavior of the nonlinear iterations. 
+c     iinfo(1) = instep - inexact Newton step number. 
 c
-c For passing information about the nonlinear iterations to user-supplied 
-c subroutines: 
-c
-!      include 'nitinfo.h'
-c
-c If information on the current state of the nonlinear iteration is
-c desired in a user-supplied subroutine (for example, deciding 
-c whether to update a preconditioner), include this common block
-c in the subroutine. The variables are as follows: 
-c
-c     instep - inexact Newton step number. 
-c
-c    newstep - set to 0 at the beginning of an inexact Newton step.
+c     iinfo(2) = newstep - set to 0 at the beginning of an inexact
+c              Newton step.
 c              This may be checked in a user-supplied jacv to decide
 c              whether to update the preconditioner.  If you test on
 c              newstep .eq. 0 to determine whether to take some 
@@ -425,17 +420,16 @@ c              special action at the beginning of a nonlinear iteration,
 c              you must also set newstep to some nonzero value to
 c              subsequently avoid taking that action unnecessarily. 
 c
-c    krystat - status of the Krylov iteration; same as itrmks (see 
-c              the nitsol documentation). 
+c     iinfo(3) = krystat - status of the Krylov iteration;
+c              same as itrmks (see the nitsol documentation). 
 c
-c    avrate  - average rate of convergence of the Krylov solver during
-c              the previous inexact Newton step.  This may be checked
+c     riinfo(1) = avrate  - average rate of convergence of the Krylov
+c              solver during the previous inexact Newton step.
+c              This may be checked
 c              in a user-supplied jacv to decide when to update the
 c              preconditioner.
 c
-c    fcurnrm - ||f(xcur)||. 
-c
-c        eta - forcing term. 
+c     riinfo(2) = fcurnrm - ||f(xcur)||. 
 c
 c ------------------------------------------------------------------------
 c
