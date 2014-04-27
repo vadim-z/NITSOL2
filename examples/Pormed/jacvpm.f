@@ -1,11 +1,12 @@
-      subroutine jacvpm(n,xcur,fcur,ijob,v,z,rpar,ipar,itrmjv)
+      subroutine jacvpm(n,xcur,fcur,ijob,v,z,rpar,ipar,
+     $    info, rinfo, itrmjv)
 c --------------------------------------------------------------------
 c This subroutine evaluates Jacobian-vector products and preconditioner 
 c solves for the flow in porous media test problem. 
 c --------------------------------------------------------------------
       implicit none
-      integer n, ijob, ipar(*), itrmjv
-      double precision xcur(n), fcur(n), v(n), z(n), rpar(*)
+      integer n, ijob, ipar(*), info(3), itrmjv
+      double precision xcur(n), fcur(n), v(n), z(n), rpar(*), rinfo(2)
       double precision bll, bur, src, tol
       integer i, j, k, fill
       integer a, l, u, c, ja, il, jl, iu, ju, jnz, col, nnzlu
@@ -15,7 +16,7 @@ c --------------------------------------------------------------------
 
 c  For obtaining information about the state of the nonlinear iteration:
 c
-      include 'nitinfo.h'
+!     include 'nitinfo.h'
 
 c  Common blocks for sharing information with ILUT factorization routine.
 
@@ -151,7 +152,7 @@ c  are all set in the include file ilut_pormed.h.
 
 c  Check to see if P needs to be updated.
 
-         if ( newstep .eq. 0 ) then
+         if ( info(2) .eq. 0 ) then
 
 c  Workspace for the factorization is obtained from ipar, rpar.
 c  It includes storage for one row of the Jacobian and compressed
@@ -173,7 +174,7 @@ c  solution.
 c  Reset newstep so that P is only updated at
 c  the start of a linear solution cycle.
 
-            newstep = 1
+            info(2) = 1
 
          endif
 
