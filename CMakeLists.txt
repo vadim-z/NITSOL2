@@ -28,14 +28,14 @@ elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
 endif()
 
 set (libsrc
-	nitdflts.f
-	nitjv.f
-	nitgm.f
-	nitstb.f
-	nittfq.f
-	nitbt.f
-	nitdrv.f
-	nitsol.f
+	src/nitdflts.f
+	src/nitjv.f
+	src/nitgm.f
+	src/nitstb.f
+	src/nittfq.f
+	src/nitbt.f
+	src/nitdrv.f
+	src/nitsol.f
 	)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
