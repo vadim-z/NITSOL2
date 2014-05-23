@@ -1,5 +1,5 @@
       subroutine nitgm (n, xcur, fcur, fcnrm, step, eta, f, jacv,
-     $     rpar, ipar, info, rinfo,
+     $     rpar, ipar, iinf, riinf,
      $     ijacv, irpre, iksmax, iresup, ifdord,
      $     iplvl, ipunit, nfe, njve,  
      $     nrpre, nli, kdmax, kdmaxp1, vv, rr, svbig, svsml, w, rwork, 
@@ -9,10 +9,10 @@
 
       integer n, ipar(*), ijacv, irpre, iksmax, iresup, ifdord,
      $     iplvl, ipunit, nfe, 
-     $     njve, nrpre, nli, kdmax, kdmaxp1, info(3), itrmks
+     $     njve, nrpre, nli, kdmax, kdmaxp1, iinf(3), itrmks
       double precision xcur(n), fcur(n), fcnrm, step(n), eta, rpar(*), 
      $     vv(n,kdmaxp1), rr(kdmax,kdmax), svbig(kdmax), svsml(kdmax), 
-     $     w(kdmax), rwork(n), rsnrm, rinfo(2), dinpr, dnorm 
+     $     w(kdmax), rwork(n), rsnrm, riinf(2), dinpr, dnorm 
       external f, jacv, dinpr, dnorm 
 
 c ------------------------------------------------------------------------
@@ -23,7 +23,6 @@ c implementation from L. Zhou and H. F. Walker, "A simpler GMRES,"
 c J. Numerical Lin. Alg. Appl., 1 (1994), pp. 571-581. 
 c
 c ------------------------------------------------------------------------
-ccccc FIXME FIXME
 c
 c Explanation: 
 c
@@ -60,7 +59,8 @@ c            be a dummy subroutine; if right preconditioning is used but
 c            not analytic J*v evaluations, this need only evaluate 
 c            P(inverse)*v. The form is 
 c
-c            subroutine jacv(n, xcur, fcur, ijob, v, z, rpar, ipar, itrmjv)
+c            subroutine jacv(n, xcur, fcur, ijob, v, z, rpar, ipar,
+c    & iinf, riinf, itrmjv)
 c
 c            where xcur and fcur are vectors of length n containing the 
 c            current x and f values, ijob is an integer flag indicating 
@@ -68,8 +68,10 @@ c            which product is desired, v is a vector of length n to be
 c            multiplied, z is a vector of length n containing the desired 
 c            product on output, rpar and ipar are, respectively, real 
 c            and integer parameter/work arrays for use by the subroutine, 
-c            and itrmjv is an integer termination 
-c            flag. The meaning of ijob is as follows: 
+c            iinf and riinf are vectors of length 3 and 2 containing
+c            information about the nonlinear iterations (see below)
+c            and itrmjv is an integer termination flag.
+c            The meaning of ijob is as follows: 
 c              0 => z = J*v
 c              1 => z = P(inverse)*v 
 c            The meaning of itrmjv is as follows:
@@ -82,6 +84,12 @@ c
 c  rpar    = real parameter/work array passed to the f and jacv routines. 
 c
 c  ipar    = integer parameter/work array passed to the f and jacv routines. 
+c
+c  iinf    = integer vector of length 3 containing information about
+c            the nonlinear iterations; see below. 
+c
+c  riinf   = real vector of length 2 containing information about
+c            the nonlinear iterations; see below. 
 c
 c  ijacv   = flag for determining method of J*v evaluation.
 c              0 => finite-difference evaluation (default). 
@@ -122,6 +130,14 @@ c            used throughout; see K. Turner and H. F. Walker, "Efficient
 c            high accuracy solutions with GMRES(m)," SIAM J. Sci. Stat. 
 c            Comput., 13 (1992), pp. 815--825. 
 c               
+c  iplvl   = 0 => no printout
+c          = 1 => iteration numbers and F-norms
+c          = 2 => ... + some stats, step norms, and linear model norms
+c          = 3 => ... + some Krylov solver and backtrack information
+c          = 4 => ... + more Krylov solver and backtrack information
+c
+c  ipunit  = printout unit number, e.g., ipunit = 6 => standard output. 
+c 
 c  nfe     = number of function evaluations.
 c
 c  njve    = number of J*v evaluations. 
@@ -176,6 +192,37 @@ c             hold, and a decision on termination/continuation is made
 c             in nitdrv according to whether there is sufficient residual 
 c             norm reduction.
 c
+c ------------------------------------------------------------------------
+c 
+c Further explanation of iinf and riinf: 
+c
+c These array contain information about the nonlinear iterations
+c to be used in user-supplied subroutine jacv. 
+c
+c The contents are as follows: 
+c
+c     iinf(1) =  instep - inexact Newton step number. 
+c
+c     iinf(2) =  newstep - set to 0 at the beginning of an inexact
+c                Newton step.
+c                This may be checked in a user-supplied jacv to decide
+c                whether to update the preconditioner.  If you test on
+c                newstep .eq. 0 to determine whether to take some 
+c                special action at the beginning of a nonlinear iteration, 
+c                you must also set newstep to some nonzero value to
+c                subsequently avoid taking that action unnecessarily. 
+c
+c     iinf(3) =  krystat - status of the Krylov iteration;
+c                same as itrmks (see the nitsol documentation). 
+c
+c     riinf(1) = avrate  - average rate of convergence of the Krylov
+c                solver during the previous inexact Newton step.
+c                This may be checked
+c                in a user-supplied jacv to decide when to update the
+c                preconditioner.
+c
+c     riinf(2) = fcurnrm - ||f(xcur)||. 
+c
 c -------------------------------------------------------------------------
 c
 c Subroutines required by this and all called routines: 
@@ -198,21 +245,6 @@ c This subroutine called by: nitdrv
 c
 c Subroutines called by this subroutine: daxpy, dcopy, dscal, dlaic1, 
 c    dlamch, dinpr, dnorm, nitjv
-c
-c Common block: 
-c
-!      include 'nitprint.h'
-c
-c If diagnostic information is desired, include this common block in the 
-c main program and set iplvl and ipunit according to the following: 
-c
-c     iplvl = 0 => no printout
-c           = 1 => iteration numbers and F-norms
-c           = 2 => ... + some stats, step norms, and linear model norms
-c           = 3 => ... + some Krylov solver and backtrack information
-c           = 4 => ... + more Krylov solver and backtrack information
-c
-c     ipunit = printout unit number.
 c
 c ------------------------------------------------------------------------
 c 
@@ -291,7 +323,7 @@ c ------------------------------------------------------------------------
       else
          itask = 1
       endif
-      call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo, 
+      call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf, 
      $     ijacv, ifdord, itask, nfe, njve, nrpre, vv(1,kd), vv(1,kdp1), 
      $     rwork, rwork, dnorm, itrmjv)
       if (itrmjv .gt. 0) then 
@@ -426,7 +458,7 @@ c the second is not referenced within nitjv.
 c ------------------------------------------------------------------------
       if (irpre .gt. 0) then 
          itask = 2
-         call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo,
+         call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
      $        ijacv, ifdord, itask, nfe, njve, nrpre, rwork, rwork, 
      $        vv(1,kdp1), vv(1,kdp1), dnorm, itrmjv)
          if (itrmjv .gt. 0) then 
@@ -450,7 +482,7 @@ c ------------------------------------------------------------------------
       if (iresup .eq. 1) then 
          itask = 0
          if (ijacv .eq. 0) ijacv = -1 
-         call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo,
+         call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
      $        ijacv, ifdord, itask, nfe, njve, nrpre, step, vv(1,1), 
      $        rwork, vv(1,kdp1), dnorm, itrmjv)
          if (ijacv .eq. -1) ijacv = 0
