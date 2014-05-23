@@ -27,7 +27,6 @@ c
 c ------------------------------------------------------------------------
 c 
 c Explanation: 
-cccc FIXME FIXME FIXME
 c
 c  n       = dimension of the problem.
 c
@@ -56,7 +55,7 @@ c           and itrmf is an integer termination flag.  The meaning of
 c           itrmf is as follows:
 c             0 => normal termination; desired function value calculated.
 c             1 => failure to produce f(xcur).
-c 
+c
 c  jacv    = name of user-supplied subroutine for evaluating J*v or 
 c            P(inverse)*v, where J is the Jacobian of f and P is a 
 c            right preconditioning operator. If neither analytic J*v 
@@ -65,7 +64,8 @@ c            be a dummy subroutine; if right preconditioning is used but
 c            not analytic J*v evaluations, this need only evaluate 
 c            P(inverse)*v. The form is 
 c
-c            subroutine jacv(n, xcur, fcur, ijob, v, z, rpar, ipar, itrmjv)
+c           subroutine jacv(n, xcur, fcur, ijob, v, z, rpar, ipar,
+c    & iinf, riinf, itrmjv)
 c
 c            where xcur and fcur are vectors of length n containing the 
 c            current x and f values, ijob is an integer flag indicating 
@@ -73,8 +73,10 @@ c            which product is desired, v is a vector of length n to be
 c            multiplied, z is a vector of length n containing the desired 
 c            product on output, rpar and ipar are, respectively, real 
 c            and integer parameter/work arrays for use by the subroutine, 
-c            and itrmjv is an integer termination flag. The meaning of 
-c            ijob is as follows: 
+c            iinf and riinf are vectors of length 3 and 2 containing
+c            information about the nonlinear iterations (see below)
+c            and itrmjv is an integer termination flag.
+c            The meaning of ijob is as follows: 
 c              0 => z = J*v
 c              1 => z = P(inverse)*v
 c            The meaning of itrmjv is as follows:
@@ -161,16 +163,16 @@ c               2 => gamma*(||fcur||/||fprev||)**alpha
 c                    for user-supplied gamma in (0,1] and alpha in (1,2] 
 c               3 => user-supplied eta in [0,1). 
 c                 3 => fixed (constant) eta in (0,1), either 0.1 (default) 
-c		       or specified by the user (see USAGE NOTE below) 
+c                      or specified by the user (see USAGE NOTE below) 
 c            Here, fcur = current f, fprev = previous f, etc. The Krylov 
 c            iterations are terminated when an iterate s satisfies 
 c            an inexact Newton condition ||F + J*s|| .le. eta*||F||.
 c
 c            USAGE NOTE: If ieta = 2, then alpha and gamma must be set 
-c            in common block nitparam.h as described below. If 
-c	     ieta = 3, then the desired constant eta may be similarly 
-c	     set in nitparam.h if a value other than the default of 
-c	     0.1 is desired. 
+c            in choice2_exp and choice2_coef as described below. If 
+c            ieta = 3, then the desired constant eta may be similarly 
+c            set in etafixed if a value other than the default of 
+c            0.1 is desired. 
 c               
 c            The first three expressions above are from S. C. Eisenstat 
 c            and H. F. Walker, "Choosing the forcing terms in an inexact 
@@ -212,8 +214,7 @@ c              5 => in nitdrv, insufficient initial model norm reduction
 c                   for adequate progress. NOTE: This can occur for several 
 c                   reasons; examine itrmks on return from the Krylov 
 c                   solver for further information. (This will be printed out 
-c                   if iplvl .ge. 3, see the discussion of optional 
-c                   common blocks below). 
+c                   if iplvl .ge. 3, see above).
 c              6 => in nitbt, failure to reach an acceptable step through 
 c                   backtracking. 
 c 
@@ -233,7 +234,7 @@ c  The following 8 parameters control the nonlinear iterations.
 c  These values are not checked here.  We assume
 c  that if you call nitdrv directly you know what you are doing.
 c
-c  choice1_exp -  parameter used in the update of the forcing term 
+c  choice1_exp  = parameter used in the update of the forcing term 
 c                 eta when ieta = 0 (default).  This is the exponent
 c                 for determining the etamin safeguard.  The default
 c                 value is choice1_exp = (1+sqrt(5))/2.  A larger
@@ -241,54 +242,54 @@ c                 value will allow eta to decrease more rapidly,
 c                 while a smaller value will result in a larger 
 c                 value for the safeguard. 
 c
-c  choice2_exp  - parameter used in the update of the forcing term 
+c  choice2_exp  = parameter used in the update of the forcing term 
 c                 eta when ieta = 2.  This is the exponent alpha 
-c     	    in the expression gamma*(||fcur||/||fprev||)**alpha; 
-c     	    it is also used to determine the etamin safeguard.  
-c     	    The default value is 2.0. Valid values are in the 
-c     	    range (1.0, 2.0].
+c                 in the expression gamma*(||fcur||/||fprev||)**alpha; 
+c                 it is also used to determine the etamin safeguard.  
+c                 The default value is 2.0. Valid values are in the 
+c                 range (1.0, 2.0].
 c
-c  choice2_coef - parameter used in the update of the forcing term eta 
+c  choice2_coef = parameter used in the update of the forcing term eta 
 c                 when ieta = 2.  This is the coefficient gamma used 
-c     	    in the expression gamma*(||fcur||/||fprev||)**alpha;
+c                 in the expression gamma*(||fcur||/||fprev||)**alpha;
 c                 it is also used to determine the etamin safeguard.
 c                 The default value is 1.0. Valid values are in the 
-c     	    range (0.0, 1.0]. 
+c                 range (0.0, 1.0]. 
 c
-c  eta_cutoff   - parameter used to determine when to disable 
+c  eta_cutoff   = parameter used to determine when to disable 
 c                 safeguarding the update of the forcing term.  It
 c                 only has meaning when ieta .ne. 3.  The default
 c                 value is 0.1.  A value of 0.0 will enable 
-c     	    safeguarding always; a value of 1.0 will disable 
-c     	    safeguarding always. 
+c                 safeguarding always; a value of 1.0 will disable 
+c                 safeguarding always. 
 c
-c  etamax       - parameter used to provide an upper bound on the 
-c     	    forcing terms when input(10) .ne. 3. This is 
-c     	    necessary to ensure convergence of the inexact Newton 
-c     	    iterates and is imposed whenever eta would otherwise 
-c     	    be too large. (An overly large eta can result from 
-c     	    the updating formulas when input(10) .ne. 3 or from 
+c  etamax       = parameter used to provide an upper bound on the 
+c                 forcing terms when input(10) .ne. 3. This is 
+c                 necessary to ensure convergence of the inexact Newton 
+c                 iterates and is imposed whenever eta would otherwise 
+c                 be too large. (An overly large eta can result from 
+c                 the updating formulas when input(10) .ne. 3 or from 
 c                 safeguarding when the previous forcing term has been 
-c     	    excessively increased during backtracking.) The 
-c     	    default value of etamax is 1.0 - 1.e-4.  When 
-c     	    backtracking occurs several times during a nonlinear 
-c     	    solve the forcing term can remain near etamax for several
+c                 excessively increased during backtracking.) The 
+c                 default value of etamax is 1.0 - 1.e-4.  When 
+c                 backtracking occurs several times during a nonlinear 
+c                 solve the forcing term can remain near etamax for several
 c                 nonlinear steps and cause the nonlinear iterations
 c                 to nearly stagnate.  In such cases a smaller value of 
 c                 etamax may prevent this.  Valid values are in the 
 c                 range (0.0, 1.0).
 c
-c  etafixed     - this is the user-supplied fixed eta when ieta = 3.
+c  etafixed     = this is the user-supplied fixed eta when ieta = 3.
 c                 The  default value is etafixed = 0.1.  Valid values
 c                 are in the range (0.0,1.0).
 c
-c  thmin        - when backtracking occurs, this is the smallest
+c  thmin        = when backtracking occurs, this is the smallest
 c                 reduction factor that will be applied to the current
 c                 step in a single backtracking reduction.  The default
 c                 value is 0.1.  Valid  values are in the range
 c                 [0.0, thmax].
 c
-c  thmax        - when backtracking occurs, this is the largest
+c  thmax        = when backtracking occurs, this is the largest
 c                 reduction factor that will be applied to the current
 c                 step in a single backtracking reduction.  The default
 c                 value is 0.5.  Valid values are in the range
@@ -311,42 +312,35 @@ c
 c  dnorm   = norm routine, either user-supplied or BLAS dnrm2. 
 c
 c ------------------------------------------------------------------------
+c 
+c Further explanation of iinf and riinf: 
 c
-c Optional common blocks: 
+c These array contain information about the nonlinear iterations
+c to be used in user-supplied subroutine jacv. 
 c
-c These can be used to control printing of diagnostic information by nitsol, 
-c to pass information about the nonlinear iterations to jacv or other user 
-c subroutines, or to control the default behavior of the nonlinear iterations. 
+c The contents are as follows: 
 c
-c For passing information about the nonlinear iterations to user-supplied 
-c subroutines: 
+c     iinf(1) =  instep - inexact Newton step number. 
 c
-!      include 'nitinfo.h'
+c     iinf(2) =  newstep - set to 0 at the beginning of an inexact
+c                Newton step.
+c                This may be checked in a user-supplied jacv to decide
+c                whether to update the preconditioner.  If you test on
+c                newstep .eq. 0 to determine whether to take some 
+c                special action at the beginning of a nonlinear iteration, 
+c                you must also set newstep to some nonzero value to
+c                subsequently avoid taking that action unnecessarily. 
 c
-c If information on the current state of the nonlinear iteration is
-c desired in a user-supplied subroutine (for example, deciding 
-c whether to update a preconditioner), include this common block
-c in the subroutine. The variables are as follows: 
+c     iinf(3) =  krystat - status of the Krylov iteration;
+c                same as itrmks (see the nitsol documentation). 
 c
-c     instep - inexact Newton step number. 
+c     riinf(1) = avrate  - average rate of convergence of the Krylov
+c                solver during the previous inexact Newton step.
+c                This may be checked
+c                in a user-supplied jacv to decide when to update the
+c                preconditioner.
 c
-c    newstep - set to 0 at the beginning of an inexact Newton step.
-c              This may be checked in a user-supplied jacv to decide
-c              whether to update the preconditioner.  If you test on
-c              newstep .eq. 0 to determine whether to take some 
-c              special action at the beginning of a nonlinear iteration, 
-c              you must also set newstep to some nonzero value to
-c              subsequently avoid taking that action unnecessarily. 
-c
-c    krystat - status of the Krylov iteration; same as itrmks (see 
-c              the nitsol documentation). 
-c
-c    avrate  - average rate of convergence of the Krylov solver during
-c              the previous inexact Newton step.  This may be checked
-c              in a user-supplied jacv to decide when to update the
-c              preconditioner.
-c
-c    fcurnrm - ||f(xcur)||. 
+c     riinf(2) = fcurnrm - ||f(xcur)||. 
 c
 c ------------------------------------------------------------------------
 c

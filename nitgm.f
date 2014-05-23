@@ -24,7 +24,7 @@ c J. Numerical Lin. Alg. Appl., 1 (1994), pp. 571-581.
 c
 c ------------------------------------------------------------------------
 ccccc FIXME FIXME
-c 	
+c
 c Explanation: 
 c
 c  n       = dimension of the problem.

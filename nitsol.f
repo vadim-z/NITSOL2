@@ -351,15 +351,15 @@ c
 c    rinpt(5) = etamax  -
 c               parameter used to provide an upper bound on the 
 c               forcing terms when input(10) .ne. 3. This is 
-c		necessary to ensure convergence of the inexact Newton 
-c		iterates and is imposed whenever eta would otherwise 
-c		be too large. (An overly large eta can result from 
-c		the updating formulas when input(10) .ne. 3 or from 
+c               necessary to ensure convergence of the inexact Newton 
+c               iterates and is imposed whenever eta would otherwise 
+c               be too large. (An overly large eta can result from 
+c               the updating formulas when input(10) .ne. 3 or from 
 c               safeguarding when the previous forcing term has been 
-c		excessively increased during backtracking.) The 
-c		default value of etamax is 1.0 - 1.e-4.  When 
-c		backtracking occurs several times during a nonlinear 
-c		solve the forcing term can remain near etamax for several
+c               excessively increased during backtracking.) The 
+c               default value of etamax is 1.0 - 1.e-4.  When 
+c               backtracking occurs several times during a nonlinear 
+c               solve the forcing term can remain near etamax for several
 c               nonlinear steps and cause the nonlinear iterations
 c               to nearly stagnate.  In such cases a smaller value of 
 c               etamax may prevent this.  Valid values are in the 
@@ -406,30 +406,30 @@ c Further explanation of iinf and riinf:
 c
 c These array contain information about the nonlinear iterations
 c to be used in user-supplied subroutine jacv. 
-
+c
 c The contents are as follows: 
 c
-c     iinfo(1) = instep - inexact Newton step number. 
+c     iinf(1) =  instep - inexact Newton step number. 
 c
-c     iinfo(2) = newstep - set to 0 at the beginning of an inexact
-c              Newton step.
-c              This may be checked in a user-supplied jacv to decide
-c              whether to update the preconditioner.  If you test on
-c              newstep .eq. 0 to determine whether to take some 
-c              special action at the beginning of a nonlinear iteration, 
-c              you must also set newstep to some nonzero value to
-c              subsequently avoid taking that action unnecessarily. 
+c     iinf(2) =  newstep - set to 0 at the beginning of an inexact
+c                Newton step.
+c                This may be checked in a user-supplied jacv to decide
+c                whether to update the preconditioner.  If you test on
+c                newstep .eq. 0 to determine whether to take some 
+c                special action at the beginning of a nonlinear iteration, 
+c                you must also set newstep to some nonzero value to
+c                subsequently avoid taking that action unnecessarily. 
 c
-c     iinfo(3) = krystat - status of the Krylov iteration;
-c              same as itrmks (see the nitsol documentation). 
+c     iinf(3) =  krystat - status of the Krylov iteration;
+c                same as itrmks (see the nitsol documentation). 
 c
-c     riinfo(1) = avrate  - average rate of convergence of the Krylov
-c              solver during the previous inexact Newton step.
-c              This may be checked
-c              in a user-supplied jacv to decide when to update the
-c              preconditioner.
+c     riinf(1) = avrate  - average rate of convergence of the Krylov
+c                solver during the previous inexact Newton step.
+c                This may be checked
+c                in a user-supplied jacv to decide when to update the
+c                preconditioner.
 c
-c     riinfo(2) = fcurnrm - ||f(xcur)||. 
+c     riinf(2) = fcurnrm - ||f(xcur)||. 
 c
 c ------------------------------------------------------------------------
 c
