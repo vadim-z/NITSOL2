@@ -61,13 +61,13 @@ c        = 4 => ... + more Krylov solver and backtrack information
 c
 c  ipunit = printout unit number, e.g., ipunit = 6 => standard output. 
 c 
-c  thmin        - when backtracking occurs, this is the smallest
+c  thmin        = when backtracking occurs, this is the smallest
 c                 reduction factor that will be applied to the current
 c                 step in a single backtracking reduction.  The default
 c                 value is 0.1.  Valid  values are in the range
 c                 [0.0, thmax].
 c
-c  thmax        - when backtracking occurs, this is the largest
+c  thmax        = when backtracking occurs, this is the largest
 c                 reduction factor that will be applied to the current
 c                 step in a single backtracking reduction.  The default
 c                 value is 0.5.  Valid values are in the range

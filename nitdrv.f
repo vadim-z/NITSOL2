@@ -377,10 +377,10 @@ c
 
       double precision alpha, epsmach, eta, etamin, fcnrm, 
      $     flmnrm, fpnrm, gamma, oftjs, oftlm, redfac, rsnrm, 
-     $     stpnrm, temp, rinfo(2) 
+     $     stpnrm, temp, riinf(2) 
       integer ibt, itrmbt, itrmf, itrmks, lrr, lsvbig, lsvsml, lvv, lw, 
      $     lr, ld, lrcgs, lrtil, lp, lphat, lq, lu, lv, lt, lrwork, ly, 
-     $     kdmaxp1, ncall, info(3)
+     $     kdmaxp1, ncall, iinf(3)
 
       double precision dlamch
       external dlamch
@@ -492,11 +492,11 @@ c ------------------------------------------------------------------------
 c ------------------------------------------------------------------------
 c Setup info vars
 c ------------------------------------------------------------------------
-      info(1) = instep
-      info(2) = newstep
-      info(3) = krystat
-      rinfo(1) = avrate
-      rinfo(2) = fcurnrm
+      iinf(1) = instep
+      iinf(2) = newstep
+      iinf(3) = krystat
+      riinf(1) = avrate
+      riinf(2) = fcurnrm
 c ------------------------------------------------------------------------
 c If ikrysl = 0, apply GMRES, using fpls as a work array. 
 c ------------------------------------------------------------------------
@@ -508,7 +508,7 @@ c ------------------------------------------------------------------------
          lsvsml = lsvbig + kdmax
          lw = lsvsml + kdmax
          call nitgm(n, xcur, fcur, fcnrm, step, eta, f, jacv,
-     $        rpar, ipar, info, rinfo, ijacv, irpre, iksmax, iresup,
+     $        rpar, ipar, iinf, riinf, ijacv, irpre, iksmax, iresup,
      $        ifdord, iplvl, ipunit, nfe, njve,  nrpre, nli, kdmax,
      $        kdmaxp1, rwork(lvv), rwork(lrr), 
      $        rwork(lsvbig), rwork(lsvsml), rwork(lw), fpls, 
@@ -526,7 +526,7 @@ c ------------------------------------------------------------------------
          lt = lv + n
          lrwork = lt + n
          call nitstb (n, xcur, fcur, fcnrm, step, eta, f, jacv,
-     $        rpar, ipar, info, rinfo,
+     $        rpar, ipar, iinf, riinf,
      $        ijacv, irpre, iksmax, ifdord, iplvl, ipunit, nfe, njve, 
      $        nrpre, nli, rwork(lr), rwork(lrtil), rwork(lp), 
      $        rwork(lphat), rwork(lv), rwork(lt), rwork(lrwork), fpls, 
@@ -547,7 +547,7 @@ c ------------------------------------------------------------------------
          ly = lv + n
          lrwork = ly + n
          call nittfq (n, xcur, fcur, fcnrm, step, eta, f, jacv,
-     $        rpar, ipar, info, rinfo,
+     $        rpar, ipar, iinf, riinf,
      $        ijacv, irpre, iksmax, ifdord, iplvl, ipunit,
      $        nfe, njve, nrpre, nli,
      $        rwork(lr), rwork(lrcgs), rwork(lrtil), rwork(ld), 
