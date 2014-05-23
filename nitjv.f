@@ -1,13 +1,13 @@
-      subroutine nitjv(n, xcur, fcur, f, jacv, rpar, ipar, info, rinfo,
+      subroutine nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
      $     ijacv, ifdord, itask, nfe, njve, nrpre, v, z, 
      $     rwork1, rwork2, dnorm, itrmjv)
 
       implicit none  
 
       integer n, ipar(*), ijacv, ifdord, itask, nfe, njve, nrpre, 
-     $     itrmjv, info(3)
+     $     itrmjv, iinf(3)
       double precision xcur(n), fcur(n), rpar(*), v(n), z(n), 
-     $     rwork1(n), rwork2(n), rinfo(2), dnorm 
+     $     rwork1(n), rwork2(n), riinf(2), dnorm 
       external f, jacv, dnorm
 
 c ------------------------------------------------------------------------
@@ -17,7 +17,6 @@ c J*v or J*P(inverse)*v or P(inverse)*v, where J is the Jacobian of f
 c and P is a right preconditioning operator. 
 c
 c ------------------------------------------------------------------------
-ccccc FIXME FIXME
 c 
 c Explanation: 
 c
@@ -49,7 +48,8 @@ c            be a dummy subroutine; if right preconditioning is used but
 c            not analytic J*v evaluations, this need only evaluate 
 c            P(inverse)*v. The form is 
 c
-c            subroutine jacv(n, xcur, fcur, ijob, v, z, rpar, ipar, itrmjv)
+c            subroutine jacv(n, xcur, fcur, ijob, v, z, rpar, ipar,
+c    & iinf, riinf, itrmjv)
 c
 c            where xcur and fcur are vectors of length n containing the 
 c            current x and f values, ijob is an integer flag indicating 
@@ -57,8 +57,10 @@ c            which product is desired, v is a vector of length n to be
 c            multiplied, z is a vector of length n containing the desired 
 c            product on output, rpar and ipar are, respectively, real 
 c            and integer parameter/work arrays for use by the subroutine, 
-c            and itrmjv is an integer termination 
-c            flag. The meaning of ijob is as follows: 
+c            iinf and riinf are vectors of length 3 and 2 containing
+c            information about the nonlinear iterations (see below)
+c            and itrmjv is an integer termination flag.
+c            The meaning of ijob is as follows: 
 c              0 => z = J*v
 c              1 => z = P(inverse)*v 
 c            The meaning of itrmjv is as follows:
@@ -71,6 +73,12 @@ c
 c  rpar    = real parameter/work array passed to the f and jacv routines. 
 c
 c  ipar    = integer parameter/work array passed to the f and jacv routines. 
+c
+c  iinf    = integer vector of length 3 containing information about
+c            the nonlinear iterations; see below. 
+c
+c  riinf   = real vector of length 2 containing information about
+c            the nonlinear iterations; see below. 
 c
 c  ijacv   = flag for determining method of J*v evaluation.
 c             -1 => finite-difference evaluation of order ifdord. 
@@ -131,6 +139,37 @@ c              1 => failure to produce J*v.
 c              2 => failure to produce P(inverse)*v. 
 c
 c ------------------------------------------------------------------------
+c 
+c Further explanation of iinf and riinf: 
+c
+c These array contain information about the nonlinear iterations
+c to be used in user-supplied subroutine jacv. 
+c
+c The contents are as follows: 
+c
+c     iinf(1) =  instep - inexact Newton step number. 
+c
+c     iinf(2) =  newstep - set to 0 at the beginning of an inexact
+c                Newton step.
+c                This may be checked in a user-supplied jacv to decide
+c                whether to update the preconditioner.  If you test on
+c                newstep .eq. 0 to determine whether to take some 
+c                special action at the beginning of a nonlinear iteration, 
+c                you must also set newstep to some nonzero value to
+c                subsequently avoid taking that action unnecessarily. 
+c
+c     iinf(3) =  krystat - status of the Krylov iteration;
+c                same as itrmks (see the nitsol documentation). 
+c
+c     riinf(1) = avrate  - average rate of convergence of the Krylov
+c                solver during the previous inexact Newton step.
+c                This may be checked
+c                in a user-supplied jacv to decide when to update the
+c                preconditioner.
+c
+c     riinf(2) = fcurnrm - ||f(xcur)||. 
+c
+c ------------------------------------------------------------------------
 c
 c Subroutines required by this and all called routines: 
 c
@@ -149,21 +188,6 @@ c This subroutine called by: nitgm, nitstb, nittfq
 c
 c Subroutines called by this subroutine: dcopy, jacv, nitfd 
 c
-c Common block: 
-c
-!      include 'nitprint.h'
-c
-c If diagnostic information is desired, include this common block in the 
-c main program and set iplvl and ipunit according to the following: 
-c
-c     iplvl = 0 => no printout
-c           = 1 => iteration numbers and F-norms
-c           = 2 => ... + some stats, step norms, and linear model norms
-c           = 3 => ... + some Krylov solver and backtrack information
-c           = 4 => ... + more Krylov solver and backtrack information
-c
-c     ipunit = printout unit number.
-c
 c ------------------------------------------------------------------------
 c 
       integer ijob 
@@ -180,7 +204,7 @@ c ------------------------------------------------------------------------
       else
          ijob = 1
          call jacv(n, xcur, fcur, ijob, v, rwork1, rpar, ipar,
-     $       info, rinfo, itrmjv)
+     $       iinf, riinf, itrmjv)
          nrpre = nrpre + 1
          if (itrmjv .ne. 0) go to 900
       endif
@@ -200,7 +224,7 @@ c ------------------------------------------------------------------------
       if (ijacv .eq. 1) then 
          ijob = 0
          call jacv(n, xcur, fcur, ijob, rwork1, z, rpar, ipar,
-     $       info, rinfo, itrmjv)
+     $       iinf, riinf, itrmjv)
       else
          call nitfd(n, xcur, fcur, f, rpar, ipar, ijacv, ifdord, 
      $     nfe, rwork1, z, rwork2, dnorm, itrmjv)
@@ -212,6 +236,7 @@ c ------------------------------------------------------------------------
  900  continue
       return
       end
+
       subroutine nitfd(n, xcur, fcur, f, rpar, ipar, ijacv, ifdord, 
      $     nfe, v, z, rwork, dnorm, itrmjv)
 
@@ -336,21 +361,6 @@ c
 c This subroutine called by: nitjv
 c
 c Subroutines called by this subroutine: daxpy, dlamch, dscal, dnorm, f 
-c
-c Common block: 
-c
-!      include 'nitprint.h'
-c
-c If diagnostic information is desired, include this common block in the 
-c main program and set iplvl and ipunit according to the following: 
-c
-c     iplvl = 0 => no printout
-c           = 1 => iteration numbers and F-norms
-c           = 2 => ... + some stats, step norms, and linear model norms
-c           = 3 => ... + some Krylov solver and backtrack information
-c           = 4 => ... + more Krylov solver and backtrack information
-c
-c     ipunit = printout unit number.
 c
 c ------------------------------------------------------------------------
 c 
