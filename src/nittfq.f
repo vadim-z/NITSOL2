@@ -1,6 +1,6 @@
       subroutine nittfq (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      &     rpar, ipar, iinf, riinf,
-     &     ijacv, irpre, iksmax, ifdord,
+     &     ijacv, irpre, iksmax, ifdord, jacmul,
      &     iplvl, ipunit, nfe, njve, nrpre, nli, r,
      &     rcgs, rtil, d, p, q, u, v, y, rwork1, rwork2, rsnrm, dinpr, 
      &                                                   dnorm, itrmks )
@@ -12,7 +12,7 @@
 
       integer ipar(*), iinf(3)
 
-      double precision eta, fcnrm, rsnrm
+      double precision eta, fcnrm, rsnrm, jacmul
 
       double precision d(n), fcur(n), p(n), q(n), rcgs(n), r(n),
      &                 rpar(*), rtil(n), rwork1(n), rwork2(n), step(n),
@@ -123,6 +123,8 @@ c            signal to nitjv that the order of the finite-difference
 c            formula is to be determined by ifdord. The original value 
 c            ijacv = 0 is restored on return. 
 c            
+c  jacmul  = jacobian FD multiplier
+c
 c  iplvl   = 0 => no printout
 c          = 1 => iteration numbers and F-norms
 c          = 2 => ... + some stats, step norms, and linear model norms
@@ -339,7 +341,7 @@ c  Choice here is rtil = r.
       else
          itask = 2
          call nitjv( n, xcur, fcur, f, jacv, rpar, ipar,
-     $       iinf, riinf, ijacv, ifdord,
+     $       iinf, riinf, ijacv, ifdord, jacmul,
      &               itask, nfe, njve, nrpre, rcgs, p, rwork1, rwork2,
      &                                                   dnorm, itrmjv )    
          if ( itrmjv .ne. 0 ) then
@@ -355,7 +357,7 @@ c  Choice here is rtil = r.
 
       itask = 0
       call nitjv( n, xcur, fcur, f, jacv, rpar, ipar,
-     $    iinf, riinf, ijacv, ifdord,
+     $    iinf, riinf, ijacv, ifdord, jacmul,
      &            itask, nfe, njve, nrpre, p, v, rwork1, rwork2,
      &                                                   dnorm, itrmjv )
       if ( itrmjv .ne. 0 ) then
@@ -394,7 +396,7 @@ c  swap some vectors to cast calculation of q as a SAXPY.
       else
          itask = 2
          call nitjv( n, xcur, fcur, f, jacv, rpar, ipar,
-     $       iinf, riinf, ijacv, ifdord,
+     $       iinf, riinf, ijacv, ifdord, jacmul,
      &               itask, nfe, njve, nrpre, v, q, rwork1, rwork2,
      &                                                   dnorm, itrmjv )    
          if ( itrmjv .ne. 0 ) then
@@ -414,7 +416,7 @@ c  Update residual.
  30   continue
       itask = 0
       call nitjv( n, xcur, fcur, f, jacv, rpar, ipar,
-     $    iinf, riinf, ijacv, ifdord,
+     $    iinf, riinf, ijacv, ifdord, jacmul,
      &            itask, nfe, njve, nrpre, y, v, rwork1, rwork2,
      &                                                   dnorm, itrmjv )
       if ( itrmjv .ne. 0 ) then
@@ -475,7 +477,8 @@ c  by the smoothed residual, calculated from scratch.
             itask = 0
             call nitjv( n, xcur, fcur, f, jacv, rpar, ipar,
      $          iinf, riinf, ijacv,
-     &            ifdord, itask, nfe, njve, nrpre, step, r, rwork1,
+     &            ifdord, jacmul,
+     $              itask, nfe, njve, nrpre, step, r, rwork1,
      &                                           rwork2, dnorm, itrmjv )
 
 c  This calculation of the QMR residual is off by a factor
@@ -525,7 +528,7 @@ c  by trying to detect whether division by rho_old causes an overflow.
       else
          itask = 2
          call nitjv( n, xcur, fcur, f, jacv, rpar, ipar,
-     $       iinf, riinf, ijacv, ifdord,
+     $       iinf, riinf, ijacv, ifdord, jacmul,
      &               itask, nfe, njve, nrpre, rcgs, v, rwork1, rwork2,
      &                                                   dnorm, itrmjv )    
          if ( itrmjv .ne. 0 ) then
@@ -541,7 +544,7 @@ c  by trying to detect whether division by rho_old causes an overflow.
 
       itask = 0
       call nitjv( n, xcur, fcur, f, jacv, rpar, ipar,
-     $    iinf, riinf, ijacv, ifdord,
+     $    iinf, riinf, ijacv, ifdord, jacmul,
      &            itask, nfe, njve, nrpre, p, v, rwork1, rwork2,
      &                                                   dnorm, itrmjv )
       if ( itrmjv .ne. 0 ) then
@@ -569,7 +572,8 @@ c  computation of residual from scratch.
          itask = 0
          call nitjv( n, xcur, fcur, f, jacv, rpar, ipar,
      $       iinf, riinf, ijacv,
-     &         ifdord, itask, nfe, njve, nrpre, step, r, rwork1,
+     &         ifdord, jacmul,
+     $           itask, nfe, njve, nrpre, step, r, rwork1,
      &                                        rwork2, dnorm, itrmjv )
 
          call daxpy( n, one, fcur, 1, r, 1 )

@@ -2,7 +2,7 @@
 
       implicit none  
 
-      double precision rinpt(8)
+      double precision rinpt(9)
 
 c
 c ------------------------------------------------------------------------
@@ -28,6 +28,7 @@ c ------------------------------------------------------------------------
       rinpt(6) = DFLT_ETA_FIXED
       rinpt(7) = DFLT_THMIN
       rinpt(8) = DFLT_THMAX
+      rinpt(9) = DFLT_JAC_MUL
 
       end
 c -------------------- end of subroutine nitdflts  --------------------------

@@ -1,6 +1,7 @@
       subroutine nitstb (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $     rpar, ipar, iinf, riinf,
-     $     ijacv, irpre, iksmax, ifdord, iplvl, ipunit, nfe, njve, 
+     $     ijacv, irpre, iksmax, ifdord, jacmul,
+     $     iplvl, ipunit, nfe, njve, 
      $     nrpre, nli, r, rtil, p, phat, v, t, rwork1, rwork2, 
      $     rsnrm, dinpr, dnorm, itrmks)
 
@@ -10,7 +11,7 @@
      $     nfe, njve, nrpre, nli, iinf(3), itrmks
       double precision xcur(n), fcur(n), fcnrm, step(n), eta, rpar(*), 
      $     r(n), rtil(n), p(n), phat(n), v(n), t(n), rwork1(n), 
-     $     rwork2(n), rsnrm, riinf(2), dinpr, dnorm 
+     $     rwork2(n), rsnrm, riinf(2), dinpr, dnorm, jacmul
       external f, jacv, dinpr, dnorm 
 
 c ------------------------------------------------------------------------
@@ -111,6 +112,8 @@ c            signal to nitjv that the order of the finite-difference
 c            formula is to be determined by ifdord. The original value 
 c            ijacv = 0 is restored on return. 
 c            
+c  jacmul  = jacobian FD multiplier
+c
 c  iplvl   = 0 => no printout
 c          = 1 => iteration numbers and F-norms
 c          = 2 => ... + some stats, step norms, and linear model norms
@@ -303,7 +306,7 @@ c ------------------------------------------------------------------------
       else
          itask = 2
          call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
-     $        ijacv, ifdord, itask, nfe, njve, nrpre, p, phat, 
+     $        ijacv, ifdord, jacmul, itask, nfe, njve, nrpre, p, phat, 
      $        rwork1, rwork2, dnorm, itrmjv)
          if (itrmjv .gt. 0) then 
             itrmks = 2
@@ -312,7 +315,7 @@ c ------------------------------------------------------------------------
       endif
       itask = 0
       call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
-     $     ijacv, ifdord, itask, nfe, njve, nrpre, phat, v, 
+     $     ijacv, ifdord, jacmul, itask, nfe, njve, nrpre, phat, v, 
      $     rwork1, rwork2, dnorm, itrmjv)
       if (itrmjv .gt. 0) then 
          itrmks = 1
@@ -351,7 +354,7 @@ c ------------------------------------------------------------------------
       else
          itask = 2
          call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
-     $        ijacv, ifdord, itask, nfe, njve, nrpre, r, phat, 
+     $        ijacv, ifdord, jacmul, itask, nfe, njve, nrpre, r, phat, 
      $        rwork1, rwork2, dnorm, itrmjv)
          if (itrmjv .gt. 0) then 
             itrmks = 2
@@ -360,7 +363,7 @@ c ------------------------------------------------------------------------
       endif
       itask = 0
       call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
-     $     ijacv, ifdord, itask, nfe, njve, nrpre, phat, t, 
+     $     ijacv, ifdord, jacmul, itask, nfe, njve, nrpre, phat, t, 
      $     rwork1, rwork2, dnorm, itrmjv)
       if (itrmjv .gt. 0) then 
          itrmks = 1

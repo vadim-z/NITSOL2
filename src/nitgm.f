@@ -1,6 +1,6 @@
       subroutine nitgm (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $     rpar, ipar, iinf, riinf,
-     $     ijacv, irpre, iksmax, iresup, ifdord,
+     $     ijacv, irpre, iksmax, iresup, ifdord, jacmul,
      $     iplvl, ipunit, nfe, njve,  
      $     nrpre, nli, kdmax, kdmaxp1, vv, rr, svbig, svsml, w, rwork, 
      $     rsnrm, dinpr, dnorm, itrmks)
@@ -12,7 +12,7 @@
      $     njve, nrpre, nli, kdmax, kdmaxp1, iinf(3), itrmks
       double precision xcur(n), fcur(n), fcnrm, step(n), eta, rpar(*), 
      $     vv(n,kdmaxp1), rr(kdmax,kdmax), svbig(kdmax), svsml(kdmax), 
-     $     w(kdmax), rwork(n), rsnrm, riinf(2), dinpr, dnorm 
+     $     jacmul, w(kdmax), rwork(n), rsnrm, riinf(2), dinpr, dnorm 
       external f, jacv, dinpr, dnorm 
 
 c ------------------------------------------------------------------------
@@ -130,6 +130,8 @@ c            used throughout; see K. Turner and H. F. Walker, "Efficient
 c            high accuracy solutions with GMRES(m)," SIAM J. Sci. Stat. 
 c            Comput., 13 (1992), pp. 815--825. 
 c               
+c  jacmul  = jacobian FD multiplier
+c
 c  iplvl   = 0 => no printout
 c          = 1 => iteration numbers and F-norms
 c          = 2 => ... + some stats, step norms, and linear model norms
@@ -324,7 +326,8 @@ c ------------------------------------------------------------------------
          itask = 1
       endif
       call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf, 
-     $     ijacv, ifdord, itask, nfe, njve, nrpre, vv(1,kd), vv(1,kdp1), 
+     $     ijacv, ifdord, jacmul,
+     $     itask, nfe, njve, nrpre, vv(1,kd), vv(1,kdp1), 
      $     rwork, rwork, dnorm, itrmjv)
       if (itrmjv .gt. 0) then 
          if (itrmjv .eq. 1) itrmks = 1
@@ -459,7 +462,8 @@ c ------------------------------------------------------------------------
       if (irpre .gt. 0) then 
          itask = 2
          call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
-     $        ijacv, ifdord, itask, nfe, njve, nrpre, rwork, rwork, 
+     $        ijacv, ifdord, jacmul,
+     $        itask, nfe, njve, nrpre, rwork, rwork, 
      $        vv(1,kdp1), vv(1,kdp1), dnorm, itrmjv)
          if (itrmjv .gt. 0) then 
             itrmks = 2
@@ -483,7 +487,8 @@ c ------------------------------------------------------------------------
          itask = 0
          if (ijacv .eq. 0) ijacv = -1 
          call nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
-     $        ijacv, ifdord, itask, nfe, njve, nrpre, step, vv(1,1), 
+     $        ijacv, ifdord, jacmul,
+     $        itask, nfe, njve, nrpre, step, vv(1,1), 
      $        rwork, vv(1,kdp1), dnorm, itrmjv)
          if (ijacv .eq. -1) ijacv = 0
          if (itrmjv .gt. 0) then 

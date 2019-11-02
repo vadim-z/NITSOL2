@@ -4,7 +4,7 @@
       implicit none  
 
       integer n, input(12), info(6), ipar(*), iterm 
-      double precision x(n), ftol, stptol, rinpt(8), rwork(*), rpar(*)
+      double precision x(n), ftol, stptol, rinpt(9), rwork(*), rpar(*)
       double precision dinpr, dnorm
       external f, jacv, dinpr, dnorm
 
@@ -89,7 +89,7 @@ c
 c  input  = integer vector of length 12 containing various user-specified 
 c           inputs; see below. 
 c
-c  rinpt  = real vector of length 8 containing various user-specified 
+c  rinpt  = real vector of length 9 containing various user-specified 
 c           inputs; see below. 
 c
 c  info   = integer vector of length 6 containing various outputs; 
@@ -302,7 +302,7 @@ c This array allows the user to specify various parameters that
 c control the nonlinear iterations.  In some cases, the default
 c values reflect prevailing practice; in other cases, they are
 c chosen to produce good average-case behavior.
-c rinpt should be declared a real vector of length 8 in the
+c rinpt should be declared a real vector of length 9 in the
 c calling program. To specify an option, set the appropriate
 c input component to the desired value according to the specifications
 c below. 
@@ -384,6 +384,9 @@ c               step in a single backtracking reduction.  The default
 c               value is 0.5.  Valid values are in the range
 c               [thmin, 1.0).
 c
+c    rinpt(9) = jacmul  -
+c               jacobian FD multiplier
+c
 c  The values in this vector are checked once here in nitsol 
 c  before the main solution driver is called.  If any parameter has
 c  an invalid value, it is silently reset to the default value.
@@ -458,7 +461,7 @@ c
      $     nbt, nfe, njve, nli, nni, nnimax, nrpre 
       double precision choice1_exp, choice2_exp, choice2_coef
       double precision eta_cutoff, etamax
-      double precision thmin, thmax, etafixed
+      double precision thmin, thmax, etafixed, jacmul
 
       include 'nitdflts.h'
  
@@ -585,6 +588,7 @@ c ------------------------------------------------------------------------
       etafixed = rinpt(6)
       thmin = rinpt(7)
       thmax = rinpt(8)
+      jacmul = rinpt(9)
 
 c ------------------------------------------------------------------------
 c  Check possible invalid values for various parameters.  In
@@ -601,6 +605,7 @@ c ------------------------------------------------------------------------
      &  thmin = DFLT_THMIN
       if ( thmax .gt. 1.0d0 .or. thmax .lt. thmin )
      &  thmax = DFLT_THMAX
+      if ( jacmul .le. 0.0d0 ) jacmul = DFLT_JAC_MUL
 c ------------------------------------------------------------------------
 c  Initialize some pointers into the rwork array.
 c ------------------------------------------------------------------------
@@ -618,7 +623,7 @@ c ------------------------------------------------------------------------
      $        ibtmax, ieta, iplvl, ipunit,
      $        iterm, nfe, njve, nrpre, nli, nni, nbt, 
      $        choice1_exp, choice2_exp, choice2_coef,
-     $        eta_cutoff, etamax, etafixed, thmin, thmax, 
+     $        eta_cutoff, etamax, etafixed, thmin, thmax, jacmul,
      $        rwork(lrwork), dinpr, dnorm)
 c ------------------------------------------------------------------------
 c Set output for return. 

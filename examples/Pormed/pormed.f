@@ -135,7 +135,7 @@ c      parameter ( LRWORK=MAXN*(MAXKD+5)+MAXKD*(MAXKD+3))
       double precision src
       double precision stptol
 
-      double precision rinpt(8)
+      double precision rinpt(9)
       double precision rpar(LRPAR)
       double precision rwork(LRWORK) 
       double precision x(MAXN)

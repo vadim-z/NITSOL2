@@ -4,7 +4,7 @@
      $     ibtmax, ieta, iplvl, ipunit,
      $     iterm, nfe, njve, nrpre, nli, nni, nbt, 
      $     choice1_exp, choice2_exp, choice2_coef,
-     $     eta_cutoff, etamax, etafixed, thmin, thmax, 
+     $     eta_cutoff, etamax, etafixed, thmin, thmax, jacmul,
      $     rwork, dinpr, dnorm)
 
       implicit none  
@@ -16,7 +16,7 @@
       double precision xcur(n), fcur(n), xpls(n), fpls(n), 
      $     step(n), rpar(*), ftol, stptol, rwork(*), dinpr, dnorm,
      $     choice1_exp, choice2_exp, choice2_coef,
-     $     eta_cutoff, etamax, etafixed, thmin, thmax
+     $     eta_cutoff, etamax, etafixed, thmin, thmax, jacmul
       external f, jacv, dinpr, dnorm
 
 c ------------------------------------------------------------------------
@@ -230,7 +230,7 @@ c  nni     = number of nonlinear iterations.
 c
 c  nbt     = number of backtracks. 
 c
-c  The following 8 parameters control the nonlinear iterations.
+c  The following 9 parameters control the nonlinear iterations.
 c  These values are not checked here.  We assume
 c  that if you call nitdrv directly you know what you are doing.
 c
@@ -294,6 +294,8 @@ c                 reduction factor that will be applied to the current
 c                 step in a single backtracking reduction.  The default
 c                 value is 0.5.  Valid values are in the range
 c                 [thmin, 1.0).
+c
+c  jacmul       = jacobian FD multiplier
 c
 c  rwork   = real work vector for use by the Krylov solver. It is passed 
 c            in as the tail of the rwork vector in nitsol. On input to 
@@ -509,8 +511,8 @@ c ------------------------------------------------------------------------
          lw = lsvsml + kdmax
          call nitgm(n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $        rpar, ipar, iinf, riinf, ijacv, irpre, iksmax, iresup,
-     $        ifdord, iplvl, ipunit, nfe, njve,  nrpre, nli, kdmax,
-     $        kdmaxp1, rwork(lvv), rwork(lrr), 
+     $        ifdord, jacmul, iplvl, ipunit, nfe, njve,  nrpre, nli,
+     $        kdmax, kdmaxp1, rwork(lvv), rwork(lrr), 
      $        rwork(lsvbig), rwork(lsvsml), rwork(lw), fpls, 
      $        rsnrm, dinpr, dnorm, itrmks)
       endif
@@ -527,7 +529,8 @@ c ------------------------------------------------------------------------
          lrwork = lt + n
          call nitstb (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $        rpar, ipar, iinf, riinf,
-     $        ijacv, irpre, iksmax, ifdord, iplvl, ipunit, nfe, njve, 
+     $        ijacv, irpre, iksmax, ifdord, jacmul,
+     $        iplvl, ipunit, nfe, njve, 
      $        nrpre, nli, rwork(lr), rwork(lrtil), rwork(lp), 
      $        rwork(lphat), rwork(lv), rwork(lt), rwork(lrwork), fpls, 
      $        rsnrm, dinpr, dnorm, itrmks)
@@ -548,7 +551,8 @@ c ------------------------------------------------------------------------
          lrwork = ly + n
          call nittfq (n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $        rpar, ipar, iinf, riinf,
-     $        ijacv, irpre, iksmax, ifdord, iplvl, ipunit,
+     $        ijacv, irpre, iksmax, ifdord, jacmul,
+     $        iplvl, ipunit,
      $        nfe, njve, nrpre, nli,
      $        rwork(lr), rwork(lrcgs), rwork(lrtil), rwork(ld), 
      $        rwork(lp), rwork(lq), rwork(lu), rwork(lv), rwork(ly),

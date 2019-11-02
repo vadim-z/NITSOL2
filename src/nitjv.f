@@ -1,5 +1,5 @@
       subroutine nitjv(n, xcur, fcur, f, jacv, rpar, ipar, iinf, riinf,
-     $     ijacv, ifdord, itask, nfe, njve, nrpre, v, z, 
+     $     ijacv, ifdord, jacmul, itask, nfe, njve, nrpre, v, z, 
      $     rwork1, rwork2, dnorm, itrmjv)
 
       implicit none  
@@ -7,7 +7,7 @@
       integer n, ipar(*), ijacv, ifdord, itask, nfe, njve, nrpre, 
      $     itrmjv, iinf(3)
       double precision xcur(n), fcur(n), rpar(*), v(n), z(n), 
-     $     rwork1(n), rwork2(n), riinf(2), dnorm 
+     $     rwork1(n), rwork2(n), riinf(2), dnorm, jacmul
       external f, jacv, dnorm
 
 c ------------------------------------------------------------------------
@@ -108,6 +108,8 @@ c
 c            If BiCGSTAB or TFQMR is used, then ifdord determines the 
 c            order of the finite-difference formula used at each 
 c            iteration (default 1). 
+c
+c  jacmul  = jacobian FD multiplier
 c
 c  itask   = flag for determining which product is produced.
 c              0 => z = J*v
@@ -227,7 +229,7 @@ c ------------------------------------------------------------------------
      $       iinf, riinf, itrmjv)
       else
          call nitfd(n, xcur, fcur, f, rpar, ipar, ijacv, ifdord, 
-     $     nfe, rwork1, z, rwork2, dnorm, itrmjv)
+     $     jacmul, nfe, rwork1, z, rwork2, dnorm, itrmjv)
       endif
       njve = njve + 1
 c ------------------------------------------------------------------------
@@ -238,13 +240,13 @@ c ------------------------------------------------------------------------
       end
 
       subroutine nitfd(n, xcur, fcur, f, rpar, ipar, ijacv, ifdord, 
-     $     nfe, v, z, rwork, dnorm, itrmjv)
+     $     jacmul, nfe, v, z, rwork, dnorm, itrmjv)
 
       implicit none  
 
       integer n, ipar(*), ijacv, ifdord, nfe, itrmjv
       double precision xcur(n), fcur(n), rpar(*), v(n), z(n), 
-     $     rwork(n), dnorm 
+     $     rwork(n), dnorm, jacmul
       external f, dnorm
 
 c ------------------------------------------------------------------------
@@ -308,6 +310,8 @@ c            If BiCGSTAB or TFQMR is used, then ifdord determines the
 c            order of the finite-difference formula used at each 
 c            iteration (default 1). 
 c
+c  jacmul  = jacobian FD multiplier
+c
 c  nfe     = number of function evaluations.
 c
 c  v       = vector to be multiplied in the product J*v. 
@@ -364,7 +368,7 @@ c Subroutines called by this subroutine: daxpy, dlamch, dscal, dnorm, f
 c
 c ------------------------------------------------------------------------
 c 
-      double precision eps, epsmach, temp
+      double precision eps, epsmach0, epsreal, temp
       integer i, itrmf, ncall
 c
       double precision dlamch
@@ -372,12 +376,16 @@ c
 c
 c ------------------------------------------------------------------------
       data ncall / 0 /
-      save ncall, epsmach 
+      save ncall, epsmach0 
 c ------------------------------------------------------------------------
 c Set epsmach (machine epsilon) on first call. 
 c ------------------------------------------------------------------------
-      if (ncall .eq. 0) epsmach = 2.0d0*dlamch( 'e' )
+      if (ncall .eq. 0) epsmach0 = 2.0d0*dlamch( 'e' )*jacmul
       ncall = 1
+c ------------------------------------------------------------------------
+c Multiply machine epsilon
+c ------------------------------------------------------------------------
+      epsreal = epsmach0*jacmul
 c ------------------------------------------------------------------------
 c Compute z = J*v by finite-differences: First, set eps = ||v||for later 
 c use in computing the difference step; then evaluate the difference 
@@ -392,7 +400,7 @@ c ------------------------------------------------------------------------
 c Here ijacv = 0 or ifdord = 1 => first-order forward difference. 
 c ------------------------------------------------------------------------
       if (ijacv .eq. 0 .or. ifdord .eq. 1) then 
-         eps = dsqrt((1.d0 + dnorm(n,xcur,1))*epsmach)/eps
+         eps = dsqrt((1.d0 + dnorm(n,xcur,1))*epsreal)/eps
          do 100 i = 1, n
             v(i) = xcur(i) + eps*v(i)
  100     continue
@@ -412,7 +420,7 @@ c ------------------------------------------------------------------------
 c Here ijacv = -1 and ifdord = 2 => second-order central difference. 
 c ------------------------------------------------------------------------
       if (ifdord .eq. 2) then 
-         eps = (((1.d0 + dnorm(n,xcur,1))*epsmach)**(1.d0/3.d0))/eps
+         eps = (((1.d0 + dnorm(n,xcur,1))*epsreal)**(1.d0/3.d0))/eps
          do 200 i = 1, n
             rwork(i) = xcur(i) + eps*v(i)
  200     continue
@@ -442,7 +450,7 @@ c ------------------------------------------------------------------------
 c Here ijacv = -1 and ifdord = 4 => fourth-order difference. 
 c ------------------------------------------------------------------------
       if (ifdord .eq. 4) then 
-         eps = (((1.d0 + dnorm(n,xcur,1))*epsmach)**(1.d0/5.d0))/eps
+         eps = (((1.d0 + dnorm(n,xcur,1))*epsreal)**(1.d0/5.d0))/eps
          do 300 i = 1, n
             rwork(i) = xcur(i) + eps*v(i)
  300     continue

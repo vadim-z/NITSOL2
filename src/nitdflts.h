@@ -37,6 +37,9 @@ c  of the constants in the first two parameter statements.
       double precision DFLT_ETA_FIXED
       parameter      ( DFLT_ETA_FIXED=tenth )
 
+      double precision DFLT_JAC_MUL
+      parameter      ( DFLT_JAC_MUL=one )
+
       integer     DFLT_PRLVL
       parameter ( DFLT_PRLVL=0 )
 

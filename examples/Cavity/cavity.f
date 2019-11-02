@@ -117,7 +117,7 @@ c     &                         10*MAXN+((MAXN+1)**2)/2)+20) )
       double precision rlftol
       double precision stptol
 
-      double precision rinpt(8)
+      double precision rinpt(9)
       double precision rpar(LRPAR)
       double precision rwork(LRWORK)
       double precision y(MAXN)
