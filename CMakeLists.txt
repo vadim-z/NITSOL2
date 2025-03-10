@@ -51,9 +51,7 @@ set (libsrc
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(nitsol2 STATIC ${libsrc})
-#target_link_libraries(somheat ${LUA_STATIC_LIB} ${BLAS_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 set_target_properties(nitsol2 PROPERTIES COMPILE_FLAGS "${FCFLAGS}")
-#set_target_properties(somheat PROPERTIES LINK_FLAGS "${LFLAGS}")
 
 # Ad-hoc
 set(CMAKE_SHARED_LIBRARY_LINK_Fortran_FLAGS "")
