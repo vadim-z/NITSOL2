@@ -2,7 +2,7 @@ module t1common
     implicit none
 
     real(8), allocatable :: a(:,:)
-    real(8), allocatable :: b(:), x0(:)
+    real(8), allocatable :: b(:), x0(:), xexact(:)
     integer :: neq
 
 contains
@@ -31,7 +31,7 @@ contains
         close(11)
 
         neq = rows
-        allocate(a(neq,neq), b(neq), x0(neq))
+        allocate(a(neq,neq), b(neq), x0(neq), xexact(neq))
         ! convert to dense
         a(:,:) = 0.d0
         do i = 1, nnz
@@ -40,8 +40,8 @@ contains
             
         ! RHS vector according to 10.1137/070707373
 
-        x0(:) = 1.d0
-        call dgemv('N', neq, neq, 1.d0, a, neq, x0, 1, 0.d0, b, 1)
+        xexact(:) = 1.d0
+        call dgemv('N', neq, neq, 1.d0, a, neq, xexact, 1, 0.d0, b, 1)
         x0(:) = 0.d0
     end subroutine t1init
 
@@ -79,12 +79,17 @@ program t1
     use t1common
     implicit none
 
-    integer, parameter :: kdmax = 100
     real(8), allocatable :: x(:), rwork(:)
     real(8) :: rpar(1), ftol, rinp(9)
     integer :: info(6), ipar(1), inp(12), lrw, iterm
 
-    real(8), parameter :: ltol = 1.d-12, stptol = 0.d0
+    real(8), parameter :: stptol = 0.d0
+    !real(8), parameter :: ltol = 1.d-12
+    !integer, parameter :: kdmax = 100
+    !integer, parameter :: ikrysl = 3
+    !integer, parameter :: iresup = 1
+    integer :: ikrysl, iresup, kdmax
+    real(8) :: ltol
 
     real(8), external :: ddot, dnrm2
 
@@ -92,16 +97,22 @@ program t1
 
     allocate(x(neq))
 
-    x = 0.d0
     call dcopy(neq, x0, 1, x, 1)
+
+    write (*,*) 'Please enter: tol kdmax ikrysl iresup'
+    read (*,*) ltol, kdmax, ikrysl, iresup
+    if (ikrysl == 1 .or. ikrysl == 2) then
+        ! provide memory for BiCG methods
+        kdmax = 9
+    end if
 
     inp(1) = 0
     inp(2) = 1
-    inp(3) = 3
+    inp(3) = ikrysl
     inp(4) = kdmax
     inp(5) = 0
     inp(6) = 10000
-    inp(7) = 1
+    inp(7) = iresup
     inp(8) = 0
     inp(9) = -1
     inp(10) = 3
@@ -111,7 +122,7 @@ program t1
     call nitdflts(rinp)
     rinp(6) = ltol
 
-    lrw = neq*(kdmax+5)+kdmax*(kdmax+3)
+    lrw = neq*(kdmax+5)+kdmax*(kdmax+6)+1
     allocate(rwork(lrw))
 
     call t1f(neq, x, rwork, rpar, ipar, iterm)
@@ -122,5 +133,8 @@ program t1
         & rwork, rpar, ipar, iterm, ddot, dnrm2)
 
     write (*,*) 'iterm: ', iterm
+    ! check the solution against the exact one
+    call daxpy(neq, -1.d0, xexact, 1, x, 1)
+    write (*,*) 'Error: ', dnrm2(neq, x, 1)/dnrm2(neq, xexact, 1)
 
 end program t1

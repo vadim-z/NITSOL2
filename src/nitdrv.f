@@ -21,7 +21,7 @@
 
 c ------------------------------------------------------------------------
 c
-c This is nitdrv v0.3, the driver routine for the Newton iterative 
+c This is nitdrv v0.4, the driver routine for the Newton iterative 
 c method.  
 c
 c ------------------------------------------------------------------------
@@ -101,12 +101,13 @@ c              0 => finite-difference evaluation (default)
 c              1 => analytic evaluation 
 c
 c  ikrysl  = flag for determining the Krylov solver: 
-c              0 => GMRES (default) 
+c              0 => (simpler) GMRES (default) 
 c              1 => BiCGSTAB
 c              2 => TFQMR
+c              3 => classical GMRES
 c
 c            For brief descriptions of the solvers plus references, 
-c            see the subroutines nitgm, nitstb, and nittfq. 
+c            see the subroutines nitgm, nitstb, nittfq, and nitcgm.
 c
 c  kdmax   = maximum Krylov subspace dimension when GMRES is used 
 c            (default 20).
@@ -299,15 +300,17 @@ c  jacmul       = jacobian FD multiplier
 c
 c  rwork   = real work vector for use by the Krylov solver. It is passed 
 c            in as the tail of the rwork vector in nitsol. On input to 
-c            nitsol, it should have length as follows: 
+c            nitsol, rwork should have length as follows: 
 c
 c             solver    rwork length
-c             GMRES     n*(kdmax+5)+kdmax*(kdmax+3), where kdmax is the 
+c             (s)GMRES  n*(kdmax+5)+kdmax*(kdmax+3), where kdmax is the 
 c                       maximum Krylov subspace dimension, either the 
 c                       default value of 20 or another value specified 
 c                       by the user. 
 c             BiCGSTAB  11*n
 c             TFQMR     14*n
+c             (c)GMRES  n*(kdmax+5)+kdmax*(kdmax+6)+1, where kdmax is the 
+c                       maximum Krylov subspace dimension.
 c
 c  dinpr   = inner-product routine, either user-supplied or BLAS ddot. 
 c
@@ -382,7 +385,7 @@ c
      $     stpnrm, temp, riinf(2) 
       integer ibt, itrmbt, itrmf, itrmks, lrr, lsvbig, lsvsml, lvv, lw, 
      $     lr, ld, lrcgs, lrtil, lp, lphat, lq, lu, lv, lt, lrwork, ly, 
-     $     kdmaxp1, ncall, iinf(3)
+     $     lgcs, lgsn, kdmaxp1, ncall, iinf(3)
 
       double precision dlamch
       external dlamch
@@ -500,7 +503,7 @@ c ------------------------------------------------------------------------
       riinf(1) = avrate
       riinf(2) = fcurnrm
 c ------------------------------------------------------------------------
-c If ikrysl = 0, apply GMRES, using fpls as a work array. 
+c If ikrysl = 0, apply (simpler) GMRES, using fpls as a work array. 
 c ------------------------------------------------------------------------
       if (ikrysl .eq. 0) then 
          kdmaxp1 = kdmax + 1 
@@ -565,14 +568,17 @@ c ------------------------------------------------------------------------
          kdmaxp1 = kdmax + 1 
          lvv = 1
          lrr = lvv + n*kdmaxp1
-         lsvbig = lrr + kdmax*kdmax 
+         lsvbig = lrr + kdmaxp1*kdmax 
          lsvsml = lsvbig + kdmax
          lw = lsvsml + kdmax
+         lgcs = lw + kdmaxp1
+         lgsn = lgcs + kdmax
          call nitcgm(n, xcur, fcur, fcnrm, step, eta, f, jacv,
      $        rpar, ipar, iinf, riinf, ijacv, irpre, iksmax, iresup,
      $        ifdord, jacmul, iplvl, ipunit, nfe, njve,  nrpre, nli,
      $        kdmax, kdmaxp1, rwork(lvv), rwork(lrr), 
-     $        rwork(lsvbig), rwork(lsvsml), rwork(lw), fpls, 
+     $        rwork(lsvbig), rwork(lsvsml), rwork(lw), rwork(lgcs),
+     $        rwork(lgsn), fpls, 
      $        rsnrm, dinpr, dnorm, itrmks)
       endif
 c ------------------------------------------------------------------------

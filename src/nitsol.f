@@ -99,7 +99,7 @@ c  rwork  = real work vector with length as follows:
 c
 c             solver    rwork length
 c
-c             GMRES     n*(kdmax+5)+kdmax*(kdmax+3), where kdmax is the 
+c             (s)GMRES  n*(kdmax+5)+kdmax*(kdmax+3), where kdmax is the 
 c                       maximum Krylov subspace dimension, either the 
 c                       default value of 20 or another value specified 
 c                       by the user (see input(4) below). 
@@ -107,6 +107,9 @@ c
 c             BiCGSTAB  11*n
 c
 c             TFQMR     14*n
+c
+c             (c)GMRES  n*(kdmax+5)+kdmax*(kdmax+6)+1, where kdmax is the 
+c                       maximum Krylov subspace dimension.
 c
 c           The final f-value is contained in the first n components of 
 c           rwork on return. 
@@ -183,12 +186,13 @@ c                 0 => finite-difference evaluation (default)
 c                 1 => analytic evaluation
 c
 c    input(3) = ikrysl = flag for determining the Krylov solver: 
-c                 0 => GMRES (default)
+c                 0 => (simpler) GMRES (default)
 c                 1 => BiCGSTAB
 c                 2 => TFQMR
+c                 3 => classical GMRES
 c
 c               For brief descriptions of the solvers plus references, 
-c               see the subroutines nitgm, nitstb, and nittfq. 
+c               see the subroutines nitgm, nitstb, nittfq and nitcgm. 
 c
 c    input(4) = kdmax = maximum Krylov subspace dimension when GMRES is used 
 c               (default 20). 

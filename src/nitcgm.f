@@ -2,7 +2,8 @@
      $     rpar, ipar, iinf, riinf,
      $     ijacv, irpre, iksmax, iresup, ifdord, jacmul,
      $     iplvl, ipunit, nfe, njve,  
-     $     nrpre, nli, kdmax, kdmaxp1, vv, rr, svbig, svsml, w, rwork, 
+     $     nrpre, nli, kdmax, kdmaxp1, vv, rrh, svbig, svsml, w,
+     $     gcs, gsn, rwork, 
      $     rsnrm, dinpr, dnorm, itrmks)
 
       implicit none 
@@ -11,16 +12,16 @@
      $     iplvl, ipunit, nfe, 
      $     njve, nrpre, nli, kdmax, kdmaxp1, iinf(3), itrmks
       double precision xcur(n), fcur(n), fcnrm, step(n), eta, rpar(*), 
-     $     vv(n,kdmaxp1), rr(kdmax,kdmax), svbig(kdmax), svsml(kdmax), 
-     $     jacmul, w(kdmax), rwork(n), rsnrm, riinf(2), dinpr, dnorm 
+     $     vv(n,kdmaxp1), rrh(kdmaxp1,kdmax), gcs(kdmax), gsn(kdmax),
+     $     svbig(kdmax), svsml(kdmax), 
+     $     jacmul, w(kdmaxp1), rwork(n), rsnrm, riinf(2), dinpr, dnorm 
       external f, jacv, dinpr, dnorm 
 
 c ------------------------------------------------------------------------
 c
-c This is nitgm v0.3, the GMRES routine for determining (trial) inexact 
-c Newton steps. This implementation is the "simpler" Gram-Schmidt GMRES 
-c implementation from L. Zhou and H. F. Walker, "A simpler GMRES," 
-c J. Numerical Lin. Alg. Appl., 1 (1994), pp. 571-581. 
+c This is nitcgm v0.1 based on nitgm v0.3, the classical GMRES routine for
+c determining (trial) inexact Newton steps. This implementation uses 
+c Modified Gram-Schmidt GMRES from Y. Saad, 2003
 c
 c ------------------------------------------------------------------------
 c
@@ -156,7 +157,8 @@ c  vv      = n x (kdmax+1) matrix for storage of Krylov basis in GMRES;
 c            on return, the residual vector is contained in the first 
 c            column.
 c
-c  rr      = kdmax x kdmax matrix for storage of triangular matrix in GMRES. 
+c  rrh     = (kdmax+1) x kdmax matrix for storage of upper Hessenberg
+c            matrix or its triangular factor in GMRES. 
 c
 c  svbig   = vector of length kdmax for storage of estimate of singular 
 c            vector of rr with largest singular value. 
@@ -164,8 +166,14 @@ c
 c  svsml   = vector of length kdmax for storage of estimate of singular 
 c            vector of rr with smallest singular value. 
 c
-c  w       = vector of length kdmax, contains right-hand side of 
-c            triangular system and least-squares residual norm in GMRES. 
+c  w       = vector of length (kdmax+1), contains right-hand side of 
+c            triangular least-squares system in GMRES. 
+c
+c  gcs     = vector of length kdmax, contains cosines of Givens rotations
+c            for an upper Hessenberg matrix in GMRES. 
+c
+c  gsn     = vector of length kdmax, contains sines of Givens rotations
+c            for an upper Hessenberg matrix in GMRES. 
 c
 c  rwork   = vector of length n, work array. 
 c
@@ -185,9 +193,10 @@ c                   of kdmax steps (stagnation) before an acceptable step
 c                   has been found. 
 c              5 => dangerous ill-conditioning detected before an acceptable 
 c                   step has been found. 
+c              6 => an upper triangular factor is exactly singular.
 c
 c             Note: On return, nitsol terminates if itrmks is 1 or 2. If  
-c             itrmks is 3, 4, or 5, nitsol may terminate or continue. In 
+c             itrmks is 3, 4, 5, or 6, nitsol may terminate or continue. In 
 c             this event, a meaningful inexact Newton step is returned, 
 c             even though the desired inexact Newton condition may not 
 c             hold, and a decision on termination/continuation is made 
@@ -279,13 +288,13 @@ c For printing:
          write(ipunit,*) 
          write(ipunit,800) eta 
       endif
- 800  format('nitgm:  eta =', 1pd10.3)
+ 800  format('nitcgm:  eta =', 1pd10.3)
       if (iplvl .ge. 4) then 
          write(ipunit,810) 
          write(ipunit,*) 
          write(ipunit,820) igm, fcnrm 
       endif
- 810  format('nitgm:  GMRES iteration no., linear residual norm, ',
+ 810  format('nitcgm:  GMRES iteration no., linear residual norm, ',
      $     'condition no. estimate')
  820  format(5x,i4,2(5x,1pd10.3))
 c ------------------------------------------------------------------------
@@ -303,6 +312,7 @@ c ------------------------------------------------------------------------
       call dscal(n, temp, vv(1,1), 1)
 c ------------------------------------------------------------------------
 c Top of the outer GMRES loop. 
+c rsnrm0 holds the norm of current residual
 c ------------------------------------------------------------------------
  100  continue
       kd = 0
@@ -337,59 +347,77 @@ c ------------------------------------------------------------------------
 c ------------------------------------------------------------------------
 c Do modified Gram-Schmidt. 
 c ------------------------------------------------------------------------
-      do 210 i = 2, kd
-         rr(i-1,kd) = dinpr(n, vv(1,i), 1, vv(1,kdp1), 1)
-         call daxpy(n, -rr(i-1,kd), vv(1,i), 1, vv(1,kdp1), 1)
+      do 210 i = 1, kd
+          rrh(i,kd) = dinpr(n, vv(1,i), 1, vv(1,kdp1), 1)
+         call daxpy(n, -rrh(i,kd), vv(1,i), 1, vv(1,kdp1), 1)
  210  continue
-      rr(kd,kd) = dnorm(n, vv(1,kdp1), 1)
+      rrh(kdp1,kd) = dnorm(n, vv(1,kdp1), 1)
 c ------------------------------------------------------------------------
-c Update the estimates of the largest and smallest singular values. 
+c Normalize vv(.,kdp1). 
+c ------------------------------------------------------------------------
+      temp = 1.d0/rrh(kdp1,kd) 
+      call dscal(n, temp, vv(1,kdp1), 1)
+c ------------------------------------------------------------------------
+c Apply accumulated Givens rotations to the current column of rrh
+c ------------------------------------------------------------------------
+      do 220 i = 1, kd-1
+         call drot(1, rrh(i,kd), 1, rrh(i+1,kd), 1, gcs(i), gsn(i))
+ 220  continue
+c ------------------------------------------------------------------------
+c Construct and apply Givens rotations for the last two entries of the column
+c ------------------------------------------------------------------------
+      call drotg(rrh(kd,kd), rrh(kdp1, kd), gcs(kd), gsn(kd))
+c NB: the element rrh(kdp1, kd) is no longer needed
+c ------------------------------------------------------------------------
+c Update the estimates of the largest and smallest singular values
+c of triangularized rrh. 
 c ------------------------------------------------------------------------
       if (kd .eq. 1) then
-         big = rr(1,1)
+         big = rrh(1,1)
          small = big
          svbig(1) = 1.d0
          svsml(1) = 1.d0
       else
          ijob = 1
-         call dlaic1(ijob, kd-1, svbig, big, rr(1,kd), rr(kd,kd),
+         call dlaic1(ijob, kd-1, svbig, big, rrh(1,kd), rrh(kd,kd),
      $        sestpr, sn, cs)
          big = sestpr
          call dscal(kd-1, sn, svbig, 1)
          svbig(kd) = cs
          ijob = 2
-         call dlaic1(ijob, kd-1, svsml, small, rr(1,kd), rr(kd,kd),
+         call dlaic1(ijob, kd-1, svsml, small, rrh(1,kd), rrh(kd,kd),
      $        sestpr, sn, cs)
          small = sestpr
          call dscal(kd-1, sn, svsml, 1)
          svsml(kd) = cs
       endif
 c ------------------------------------------------------------------------
-c Terminate if the estimated condition number is too great. 
+c Terminate if the triangular matrix is exactly singular.
+c Otherwise the solution will break down.
+c ------------------------------------------------------------------------
+      if (rrh(kd,kd) .eq. 0.d0) then
+         itrmks = 6
+         goto 900
+      endif
+c ------------------------------------------------------------------------
+c Undo the last inner iteration and terminate if the estimated condition
+c number is too great. 
 c ------------------------------------------------------------------------
       if (big .ge. small*cndmax) then 
-         if (kd .eq. 1) then 
-            itrmks = 5
-            go to 900
-         else 
+c     It cannot happen with kd = 1 because big = small in this case
+c     and the only possibility is small = 0 which is prevented by 
+c     the check above.
+         if (kd .gt. 1) then 
             kdp1 = kd
             kd = kd - 1
-            call daxpy(n, w(kd), vv(1,kdp1), 1, vv(1,1), 1)
             go to 300
          endif
       endif
 c ------------------------------------------------------------------------
-c Normalize vv(.,kdp1). 
+c Update the relative residual norm
 c ------------------------------------------------------------------------
-      temp = 1.d0/rr(kd,kd) 
-      call dscal(n, temp, vv(1,kdp1), 1)
+      rsnrm = rsnrm*dabs(gsn(kd))
 c ------------------------------------------------------------------------
-c Update w and the residual norm by rsnrm <- rsnrm*dsin(dacos(w(kd)/rsnrm). 
-c ------------------------------------------------------------------------
-      w(kd) = dinpr(n, vv(1,1), 1, vv(1,kdp1), 1)
-      temp = max(min(w(kd)/rsnrm,1.0D0),-1.0d0) 
-      rsnrm = rsnrm*dsin(dacos(temp))
-c ------------------------------------------------------------------------ 
 c For printing:
       if (iplvl .ge. 4) then 
          write(ipunit,820) igm, rsnrm*rsnrm0, big/small
@@ -403,10 +431,9 @@ c ------------------------------------------------------------------------
       if ( (rsnrm0*rsnrm .le. abstol) .or. (kd .eq. kdmax) .or.  
      $     (igm .ge. iksmax) )  go to 300
 c ------------------------------------------------------------------------
-c If not terminating the inner loop, update the residual vector 
-c and go to the top of the inner loop. 
+c If not terminating the inner loop, 
+c  go to the top of the inner loop. 
 c ------------------------------------------------------------------------
-      call daxpy(n, -w(kd), vv(1,kdp1), 1, vv(1,1), 1)
       go to 200
 c ------------------------------------------------------------------------
 c Bottom of inner loop.
@@ -424,34 +451,37 @@ c Compute the solution:
 c ------------------------------------------------------------------------
 c
 c ------------------------------------------------------------------------
-c Use svbig for storage of the original components of w. 
+c Form RHS vector.
+c kd and kdp1 hold the current (+1) dimension
 c ------------------------------------------------------------------------
-      call dcopy(kd, w, 1, svbig, 1)
-c ------------------------------------------------------------------------
-c Overwrite w with the solution of the upper triangular system.
-c ------------------------------------------------------------------------
-      do 310 i = kd, 1, -1
-         w(i) = w(i)/rr(i,i)
-         if (i .gt. 1) call daxpy(i-1, -w(i), rr(1,i), 1, w, 1)
+      w(1) = rsnrm0
+      do 310 i = 2, kdp1
+         w(i) = 0.d0
  310  continue
 c ------------------------------------------------------------------------
+c Apply Givens rotations to the RHS vector.
+c Then solve the triangular system kd x kd with rrh matrix
+c ------------------------------------------------------------------------
+      do 320 i = 1, kd
+         call drot(1, w(i), 1, w(i+1), 1, gcs(i), gsn(i))
+ 320  continue
+      call dtrsv('U', 'N', 'N', kd, rrh, kdmaxp1, w, 1)
+c ------------------------------------------------------------------------
 c Now form the linear combination to accumulate the correction in 
-c the work vector.
+c the work vector. Result is written to rwork.
 c ------------------------------------------------------------------------
-      call dcopy(n, vv(1,1), 1, rwork, 1)
-      call dscal(n, w(1), rwork, 1)
-      if (kd .gt. 1) then 
-         call daxpy(kd-1, w(1), svbig, 1, w(2), 1)
-         do 320 i = 2, kd
-            call daxpy(n, w(i), vv(1,i), 1, rwork, 1)
- 320     continue
-      endif
+      call dgemv('N', n, kd, 1.d0, vv, n, w, 1, 0.d0, rwork, 1)
 c ------------------------------------------------------------------------
-c If iresup .eq. 0, then update the residual vector by linear 
-c combination. This frees vv(.,kdp1) for use as a work array. 
+c If iresup .eq. 0, then calculate the normalized residual vector by linear 
+c combination. Result is written to vv(.,1).
+c This frees vv(.,kdp1) for use as a work array.
+c The residual is normalized by construction, see (6.41) in Y. Saad, 2003
 c ------------------------------------------------------------------------
-      if (iresup .eq. 0) then 
-         call daxpy(n, -svbig(kd), vv(1,kdp1), 1, vv(1,1), 1)
+      if (iresup .eq. 0) then
+         do 325 i = 1, kd
+            call dscal(n, -gsn(i), vv(1,1), 1)
+            call daxpy(n, gcs(i), vv(1,i+1), 1, vv(1,1), 1)
+ 325     continue
       endif
 c ------------------------------------------------------------------------
 c If right preconditioning is used, overwrite 
@@ -473,7 +503,7 @@ c ------------------------------------------------------------------------
 c ------------------------------------------------------------------------
 c Update the step. This frees rwork for use as a work array.
 c ------------------------------------------------------------------------
-      call daxpy(n, rsnrm0, rwork, 1, step, 1)
+      call daxpy(n, 1.d0, rwork, 1, step, 1)
 c ------------------------------------------------------------------------
 c If iresup .eq. 1, then update the residual vector by direct evaluation, 
 c using rwork and vv(.,kdp1) as work arrays. Note: Two distinct work  
@@ -526,22 +556,31 @@ c return to the top of the outer loop.
 c ------------------------------------------------------------------------
       if (iresup .eq. 0) then 
          rsnrm0 = rsnrm0*rsnrm
-         temp = 1.d0/rsnrm
+c        residual is already normalized
       else
          rsnrm0 = dnorm(n, vv(1,1), 1)
          temp = 1.d0/rsnrm0
+         call dscal(n, temp, vv(1,1), 1)
       endif
-      call dscal(n, temp, vv(1,1), 1)
       go to 100
 c ------------------------------------------------------------------------
 c All returns made here.
 c ------------------------------------------------------------------------
  900  continue
-      if (itrmks .ne. 1 .and. itrmks .ne. 2) then 
-         if (iresup .eq. 0) then 
-            call dscal(n, rsnrm0, vv(1,1), 1)
+c ------------------------------------------------------------------------
+c De-normalize residual.
+c ------------------------------------------------------------------------
+      if (itrmks .ne. 1 .and. itrmks .ne. 2) then
+c        itrmks = 6 means singular matrix,
+c        in this case the whole outer iteration is terminated,
+c        so the residual is always normalized.
+c        If iresup = 0 then the residual is normalized by construction,
+c        see above. So we need to scale back the residual
+         if (iresup .eq. 0 .or. itrmks .eq. 6) then 
             rsnrm = rsnrm0*rsnrm
+            call dscal(n, rsnrm, vv(1,1), 1)
          else
+c           The residual is not normalized.
             rsnrm = dnorm(n, vv(1,1), 1)
          endif
       endif
@@ -550,11 +589,11 @@ c For printing:
       if (iplvl .ge. 3) then 
          if (itrmks .ne. 1 .and. itrmks .ne. 2) then 
             write(ipunit,830) itrmks, rsnrm 
- 830        format('nitgm:  itrmks =', i2, '    final lin. res. norm =', 
+ 830        format('nitcgm:  itrmks =', i2, '   final lin. res. norm =', 
      $           1pd10.3)
          else
             write(ipunit,840) itrmks
- 840        format('nitgm: itrmks:', i4) 
+ 840        format('nitcgm: itrmks:', i4) 
          endif
       endif
 c ------------------------------------------------------------------------
