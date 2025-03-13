@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 2.6)
-project(NITSOL2 Fortran)
+cmake_minimum_required(VERSION 3.12)
+if (NO_C)
+	project(NITSOL2 Fortran)
+else()
+	project(NITSOL2 Fortran C)
+endif()
 
 if(WIN32 AND CMAKE_Fortran_COMPILER_ID STREQUAL "Intel")
 	set (LFLAGS "")
@@ -40,6 +44,7 @@ endif()
 set (libsrc
 	src/nitdflts.f
 	src/nitjv.f
+	src/nitcgm.f
 	src/nitgm.f
 	src/nitstb.f
 	src/nittfq.f

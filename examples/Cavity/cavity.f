@@ -84,7 +84,7 @@ c --------------------------------------------------------------------
       integer     LRWORK
 c>>> Alternative parameter statements for different circumstances -- HFW. 
 c The following is always safe but may require a little unnecessary storage.
-      parameter ( LRWORK=MAXN*(MAXKD+10)+MAXKD*(MAXKD+3))
+      parameter ( LRWORK=MAXN*(MAXKD+14)+MAXKD*(MAXKD+6)+1)
 c The following can be used if the compiler allows the "max". 
 c      parameter ( LRWORK=max(11*MAXN,MAXN*(MAXKD+5)+MAXKD*(MAXKD+3)) )
 c The following can be used if MAXKD > 5.
@@ -130,8 +130,8 @@ c     &                         10*MAXN+((MAXN+1)**2)/2)+20) )
 
       external  fcav, jacvcav
 
-      character*8 method(0:2)
-      data method /'GMRES','BiCGSTAB','TFQMR'/
+      character*8 method(0:3)
+      data method /'sGMRES','BiCGSTAB','TFQMR','cGMRES'/
 
 c --------------------------------------------------------------------
 c For printing:
@@ -175,7 +175,7 @@ c Reset particular inputs as desired.
       write(6,800)
       read(5,*) input(3), input(5) 
 
-      if (input(3) .eq. 0) then 
+      if (input(3) .eq. 0 .or. input(3) .eq. 3) then 
          write(6,*) ' Type kdmax = maximum Krylov subspace dimension:'
  30      read(5,*) input(4) 
          if ( input(4) .gt. MAXKD ) then
@@ -249,6 +249,7 @@ c  Prompt for another case.
      $/'ikrysl = 0 => GMRES',
      $/'         1 => BiCGSTAB', 
      $/'         2 => TFQMR', 
+     $/'         3 => classical GMRES', 
      $/'irpre  = 0 => no right preconditioning',
      $/'         1 => right preconditioning',
      $/'-------------------------------------------------------------')
