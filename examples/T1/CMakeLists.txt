@@ -21,7 +21,7 @@ set(src
 	../../src/nitbt.f
 	../../src/nitdflts.f
 	../../src/nitdrv.f
-	#../../src/nitcgm.f
+	../../src/nitcgm.f
 	../../src/nitgm.f
 	../../src/nitjv.f
 	../../src/nitsol.f

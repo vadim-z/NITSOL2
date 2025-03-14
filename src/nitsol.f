@@ -488,13 +488,13 @@ c ------------------------------------------------------------------------
          iterm = -2
          go to 900
       endif
-      if (input(3) .ge. 0 .and. input(3) .le. 2) then 
+      if (input(3) .ge. 0 .and. input(3) .le. 3) then 
          ikrysl = input(3)
       else 
          iterm = -3
          go to 900
       endif
-      if (ikrysl .eq. 0) then 
+      if (ikrysl .eq. 0 .or. ikrysl .eq. 3) then 
          if (input(4) .eq. 0) then 
             kdmax = 20
          else
@@ -522,7 +522,7 @@ c ------------------------------------------------------------------------
             go to 900
          endif
       endif
-      if (ikrysl .eq. 0) then 
+      if (ikrysl .eq. 0 .or. ikrysl .eq. 3) then 
          if (input(7) .eq. 0 .or. input(7) .eq. 1) then 
             iresup = input(7)
          else
@@ -532,7 +532,7 @@ c ------------------------------------------------------------------------
       endif
       if (ijacv .eq. 0) then 
          if (input(8) .eq. 0) then 
-            if (ikrysl .eq. 0) then 
+            if (ikrysl .eq. 0 .or. ikrysl .eq. 3) then 
                ifdord = 2
             else
                ifdord = 1

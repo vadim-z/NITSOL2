@@ -559,6 +559,23 @@ c ------------------------------------------------------------------------
      $        rwork(lrwork), fpls, rsnrm, dinpr, dnorm, itrmks)
       endif
 c ------------------------------------------------------------------------
+c If ikrysl = 3, apply classical GMRES, using fpls as a work array. 
+c ------------------------------------------------------------------------
+      if (ikrysl .eq. 3) then 
+         kdmaxp1 = kdmax + 1 
+         lvv = 1
+         lrr = lvv + n*kdmaxp1
+         lsvbig = lrr + kdmax*kdmax 
+         lsvsml = lsvbig + kdmax
+         lw = lsvsml + kdmax
+         call nitcgm(n, xcur, fcur, fcnrm, step, eta, f, jacv,
+     $        rpar, ipar, iinf, riinf, ijacv, irpre, iksmax, iresup,
+     $        ifdord, jacmul, iplvl, ipunit, nfe, njve,  nrpre, nli,
+     $        kdmax, kdmaxp1, rwork(lvv), rwork(lrr), 
+     $        rwork(lsvbig), rwork(lsvsml), rwork(lw), fpls, 
+     $        rsnrm, dinpr, dnorm, itrmks)
+      endif
+c ------------------------------------------------------------------------
 c  Set values in nitinfo that reflect state of iterative solver.
 c ------------------------------------------------------------------------
       krystat = itrmks

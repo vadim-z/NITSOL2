@@ -97,7 +97,7 @@ program t1
 
     inp(1) = 0
     inp(2) = 1
-    inp(3) = 0
+    inp(3) = 3
     inp(4) = kdmax
     inp(5) = 0
     inp(6) = 10000
