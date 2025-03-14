@@ -123,8 +123,9 @@ c  iresup  = residual update flag when GMRES is used; on GMRES restarts,
 c            the residual is updated as follows: 
 c              0 => linear combination (default) 
 c              1 => direct evaluation
-c            The first is cheap (one n-vector saxpy) but may lose 
-c            accuracy with extreme residual reduction; the second 
+c            The first is cheap (one n-vector saxpy for simpler GMRES,
+c            no more than kdmax n-vector saxpys for classical GMRES) but
+c            may lose accuracy with extreme residual reduction; the second 
 c            retains accuracy better but costs one J*v product per 
 c            restart. 
 c

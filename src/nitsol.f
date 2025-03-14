@@ -210,10 +210,11 @@ c    input(7) = iresup = residual update flag when GMRES is used; on
 c               restarts, the residual is updated as follows: 
 c                 0 => linear combination (default) 
 c                 1 => direct evaluation
-c               The first is cheap (one n-vector saxpy) but may lose 
-c               accuracy with extreme residual reduction; the second 
-c               retains accuracy better but costs one J*v product per 
-c               restart. 
+c               The first is cheap (one n-vector saxpy for simpler GMRES,
+c               no more than kdmax n-vector saxpys for classical GMRES)
+c               but may lose accuracy with extreme residual reduction;
+c               the second retains accuracy better but costs one J*v
+c               product per restart. 
 c
 c    input(8) = ifdord = order of the finite-difference formula (sometimes) 
 c               used when input(2) = ijacv = 0. When input(2) = ijacv = 0, 
